@@ -10,7 +10,7 @@ export const GOVERNORATES = [
 ]
 
 export const ORDER_STATUS = {
-  pending_payment: { label: 'Order Received', color: '#A8956F' },
+  pending_payment: { label: 'Order Placed', color: '#A8956F' },
   paid: { label: 'Order Confirmed', color: '#2D2B34' },
   in_production: { label: 'In Production', color: '#A8956F' },
   ready_to_ship: { label: 'Ready to Ship', color: '#2D2B34' },
