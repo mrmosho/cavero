@@ -1,5 +1,6 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 import { CartProvider } from '@/context/CartContext'
 import { AdminProvider } from '@/context/AdminContext'
 import AdminGuard from '@/components/AdminGuard'
@@ -23,6 +24,39 @@ import AdminOrders from '@/pages/admin/Orders'
 import AdminOrderDetail from '@/pages/admin/OrderDetail'
 import AdminProducts from '@/pages/admin/Products'
 import AdminProductForm from '@/pages/admin/ProductForm'
+import AdminSetPassword from '@/pages/admin/SetPassword'
+
+/**
+ * Catches Supabase auth tokens in the URL hash.
+ * Invite links land here: /#access_token=xxx&type=invite
+ * We let Supabase process the token, then redirect to set-password page.
+ */
+function AuthCallbackHandler() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash || !hash.includes('access_token')) return
+
+    // Parse the hash fragment
+    const params = new URLSearchParams(hash.replace('#', ''))
+    const type = params.get('type')
+
+    // Let Supabase pick up the session from the URL
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        if (type === 'invite' || type === 'recovery') {
+          // Send to password setup page
+          navigate('/admin/set-password', { replace: true })
+        } else {
+          navigate('/admin', { replace: true })
+        }
+      }
+    })
+  }, [navigate])
+
+  return null
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -54,10 +88,8 @@ function AdminLayout() {
   return (
     <AdminProvider>
       <Routes>
-        {/* Login — no guard */}
         <Route path="/admin/login" element={<AdminLogin />} />
-
-        {/* All other admin routes — guarded */}
+        <Route path="/admin/set-password" element={<AdminSetPassword />} />
         <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
         <Route path="/admin/orders" element={<AdminGuard><AdminOrders /></AdminGuard>} />
         <Route path="/admin/orders/:id" element={<AdminGuard><AdminOrderDetail /></AdminGuard>} />
@@ -70,10 +102,13 @@ function AdminLayout() {
 
 export default function App() {
   const { pathname } = useLocation()
+  const isAdmin = pathname.startsWith('/admin')
+
   return (
     <CartProvider>
+      <AuthCallbackHandler />
       <ScrollToTop />
-      {pathname.startsWith('/admin') ? <AdminLayout /> : <StoreLayout />}
+      {isAdmin ? <AdminLayout /> : <StoreLayout />}
     </CartProvider>
   )
 }
