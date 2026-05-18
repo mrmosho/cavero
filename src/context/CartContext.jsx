@@ -17,7 +17,7 @@ export function CartProvider({ children }) {
       if (existing) return prev.map(i => i.key === key ? { ...i, qty: i.qty + qty, personalisationNote: options.personalisationNote ?? i.personalisationNote } : i)
       return [...prev, { key, slug: product.slug, name: product.name, price: product.price, label: product.label, qty, variantName: options.variantName || null, personalisationNote: options.personalisationNote || null }]
     })
-    showToast('Added to cart \u2746')
+    showToast('Added to cart ✦')
   }, [showToast])
   const removeFromCart = useCallback((key) => setCart(prev => prev.filter(i => i.key !== key)), [])
   const updateQty = useCallback((key, qty) => { if (qty <= 0) { removeFromCart(key); return } setCart(prev => prev.map(i => i.key === key ? { ...i, qty } : i)) }, [removeFromCart])

@@ -11,9 +11,9 @@ export default function Newsletter() {
     setLoading(true)
     try {
       const { error } = await supabase.from('newsletter_subscribers').insert({ email, source: 'website' })
-      if (error && error.code === '23505') showToast('You\'re already on the list \u2746')
+      if (error && error.code === '23505') showToast('You\'re already on the list ✦')
       else if (error) throw error
-      else { showToast('You\'re on the list \u2014 thank you \u2746'); setEmail('') }
+      else { showToast('You\'re on the list — thank you ✦'); setEmail('') }
     } catch { showToast('Something went wrong. Please try again.') }
     finally { setLoading(false) }
   }
@@ -21,10 +21,10 @@ export default function Newsletter() {
     <div className="newsletter">
       <div className="container">
         <div className="newsletter__inner reveal">
-          <p className="t-label" style={{ color:'var(--stone)', marginBottom:16 }}>Stay close</p>
-          <h2 className="t-h2" style={{ color:'var(--cream)' }}>Be first to see<br/>new pieces.</h2>
+          <p className="t-label" style={{ color: 'var(--stone)', marginBottom: 16 }}>Stay close</p>
+          <h2 className="t-h2" style={{ color: 'var(--cream)' }}>Be first to see<br />new pieces.</h2>
           <form className="newsletter__form" onSubmit={handleSubmit}>
-            <input className="newsletter__input" type="email" placeholder="Your email address" value={email} onChange={e => setEmail(e.target.value)} required/>
+            <input className="newsletter__input" type="email" placeholder="Your email address" value={email} onChange={e => setEmail(e.target.value)} required />
             <button className="newsletter__submit" type="submit" disabled={loading}>{loading ? '...' : 'Subscribe'}</button>
           </form>
           <p className="newsletter__note">No spam. Just new drops and seasonal gift guides.</p>

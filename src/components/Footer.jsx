@@ -27,14 +27,14 @@ export default function Footer() {
           </div>
           <div>
             <div className="footer__col-title">Cairo, Egypt</div>
-            <a href="mailto:caveroegy.com" className="footer__link">hello@cavero.com</a>
+            <a href="mailto:caveroegy@gmail.com" className="footer__link">caveroegy@gmail.com</a>
             <a href="https://wa.me/201055115993" target="_blank" rel="noreferrer" className="footer__link">WhatsApp</a>
-            <p className="footer__link" style={{ cursor: 'default' }}>Sun \u2013 Thu \u00b7 10am \u2013 8pm</p>
+            <p className="footer__link" style={{ cursor: 'default' }}>Sun – Thu · 10am – 8pm</p>
             <div style={{ marginTop: 24 }}><Link to="/contact" className="btn btn-outline-cream btn-sm">Custom order</Link></div>
           </div>
         </div>
         <div className="footer__bottom">
-          <p className="footer__copy">\u00a9 2025 Cavero Studio \u00b7 Cairo, Egypt \u00b7 All rights reserved.</p>
+          <p className="footer__copy">© 2025 Cavero Studio · Cairo, Egypt · All rights reserved.</p>
           <div className="footer__social"><a href="#" className="footer__social-link">Privacy Policy</a><a href="#" className="footer__social-link">Terms</a></div>
         </div>
       </div>
