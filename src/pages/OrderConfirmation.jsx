@@ -82,7 +82,7 @@ export default function OrderConfirmation() {
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/shop" className="btn btn-outline">Continue shopping</Link>
-            <a href="https://wa.me/201XXXXXXXXX" target="_blank" rel="noreferrer" className="btn btn-bronze">Contact us on WhatsApp</a>
+            <a href="https://wa.me/201055115993" target="_blank" rel="noreferrer" className="btn btn-bronze">Contact us on WhatsApp</a>
           </div>
         </div>
       </div>
