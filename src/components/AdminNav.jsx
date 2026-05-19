@@ -6,6 +6,7 @@ const LINKS = [
   { to: '/admin/orders',   label: 'Orders' },
   { to: '/admin/products',       label: 'Products' },
   { to: '/admin/discount-codes',  label: 'Discounts' },
+  { to: '/admin/finance',          label: 'Finance' },
 ]
 
 export default function AdminNav() {
