@@ -6,9 +6,14 @@ export default function Footer() {
         <div className="footer__grid">
           <div>
             <div className="footer__brand-name">Cavero</div>
-            <div className="footer__divider" />
+            <div className="footer__divider"/>
             <p className="footer__brand-desc">Studio-crafted home objects, made to order. Every piece is designed with intention and made after you place your order. Based in Cairo, Egypt.</p>
-            <div style={{ marginTop: 28, display: 'flex', gap: 20 }}>{['Instagram', 'TikTok', 'Facebook', 'WhatsApp'].map(s => <a key={s} className="footer__social-link" href="#">{s}</a>)}</div>
+            <div style={{ marginTop:28, display:'flex', gap:20 }}>
+              <a href="https://www.instagram.com/caveroegy?igsh=cTU5M2ZscW1pcng2" target="_blank" rel="noreferrer" className="footer__social-link">Instagram</a>
+              <a href="https://www.tiktok.com/@caveroegy" target="_blank" rel="noreferrer" className="footer__social-link">TikTok</a>
+              <a href="https://www.facebook.com/profile.php?id=61589152890006" target="_blank" rel="noreferrer" className="footer__social-link">Facebook</a>
+              <a href="https://wa.me/201055115993" target="_blank" rel="noreferrer" className="footer__social-link">WhatsApp</a>
+            </div>
           </div>
           <div>
             <div className="footer__col-title">Shop</div>
@@ -29,8 +34,8 @@ export default function Footer() {
             <div className="footer__col-title">Cairo, Egypt</div>
             <a href="mailto:caveroegy@gmail.com" className="footer__link">caveroegy@gmail.com</a>
             <a href="https://wa.me/201055115993" target="_blank" rel="noreferrer" className="footer__link">WhatsApp</a>
-            <p className="footer__link" style={{ cursor: 'default' }}>Sun – Thu · 10am – 8pm</p>
-            <div style={{ marginTop: 24 }}><Link to="/contact" className="btn btn-outline-cream btn-sm">Custom order</Link></div>
+            <p className="footer__link" style={{ cursor:'default' }}>Sun – Thu · 10am – 8pm</p>
+            <div style={{ marginTop:24 }}><Link to="/contact" className="btn btn-outline-cream btn-sm">Custom order</Link></div>
           </div>
         </div>
         <div className="footer__bottom">
