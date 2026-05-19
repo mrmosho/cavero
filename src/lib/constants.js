@@ -10,14 +10,12 @@ export const GOVERNORATES = [
 ]
 
 export const ORDER_STATUS = {
-  pending_payment: { label: 'Order Placed',     color: '#A8956F' },
-  paid:            { label: 'Order Confirmed',  color: '#2D2B34' },
-  in_production:   { label: 'In Production',    color: '#A8956F' },
-  ready_to_ship:   { label: 'Ready to Ship',    color: '#2D2B34' },
-  shipped:         { label: 'Shipped',           color: '#2D2B34' },
-  delivered:       { label: 'Delivered',         color: '#6B8F5E' },
-  completed:       { label: 'Completed',          color: '#6B8F5E' },
-  cancelled:       { label: 'Cancelled',         color: '#8B1A1A' },
+  pending_payment: { label: 'Order Placed',    color: '#A8956F' },
+  in_production:   { label: 'In Production',   color: '#C4873A' },
+  ready_to_ship:   { label: 'Ready to Ship',   color: '#2D2B34' },
+  shipped:         { label: 'Shipped',          color: '#2D2B34' },
+  completed:       { label: 'Completed',        color: '#6B8F5E' },
+  cancelled:       { label: 'Cancelled',        color: '#8B1A1A' },
 }
 
 // Cash on delivery only — add Paymob options here when ready

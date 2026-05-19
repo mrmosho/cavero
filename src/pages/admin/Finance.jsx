@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { ORDER_STATUS } from '@/lib/constants'
 import AdminNav from '@/components/AdminNav'
 
-const REVENUE_STATUSES = ['paid','completed','delivered']
+const REVENUE_STATUSES = ['completed']
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 function exportToCSV(orders, summary) {
@@ -82,7 +82,7 @@ export default function AdminFinance() {
   }
 
   // ── Computed stats ────────────────────────────────────────
-  const confirmed   = filtered.filter(o => REVENUE_STATUSES.includes(o.status) && o.status !== 'cancelled')
+  const confirmed   = filtered.filter(o => o.status === 'completed')
   const cancelled   = filtered.filter(o => o.status === 'cancelled')
   const totalRev    = confirmed.reduce((s,o) => s + (o.total||0), 0)
   const totalDisc   = filtered.reduce((s,o) => s + (o.discount_amount||0), 0)
@@ -109,7 +109,7 @@ export default function AdminFinance() {
   // Product breakdown — explicitly only from paid/completed/delivered orders
   const productMap = {}
   filtered
-    .filter(o => ['paid','completed','delivered'].includes(o.status))
+    .filter(o => o.status === 'completed')
     .forEach(o => {
       (o.order_items||[]).forEach(item => {
         if (!productMap[item.product_name]) productMap[item.product_name] = { qty: 0, revenue: 0 }
@@ -219,7 +219,7 @@ export default function AdminFinance() {
             <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:24, marginBottom:24 }}>
               <h3 style={{ fontSize:'0.72rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)', marginBottom:20 }}>Revenue by status</h3>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:16 }}>
-                {REVENUE_STATUSES.map(s => {
+                {['pending_payment','in_production','ready_to_ship','shipped','completed','cancelled'].map(s => {
                   const statusOrders = filtered.filter(o => o.status === s)
                   const rev = statusOrders.reduce((sum,o) => sum + (o.total||0), 0)
                   const info = ORDER_STATUS[s]

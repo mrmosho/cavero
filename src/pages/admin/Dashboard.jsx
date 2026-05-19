@@ -31,7 +31,7 @@ export default function AdminDashboard() {
       const week  = new Date(today); week.setDate(week.getDate() - 7)
       const month = new Date(today); month.setDate(1)
       const inRange = (d, from) => new Date(d) >= from
-      const activeStatuses = ['paid', 'completed', 'delivered']
+      const activeStatuses = ['completed']
 
       setStats({
         totalOrders:   orders.length,
