@@ -50,6 +50,7 @@ export default function AdminProductForm() {
   // ── Save product ─────────────────────────────────────────
   async function handleSave(e) {
     e.preventDefault()
+    if (!isNew && !confirm('Save changes to this product?')) return
     setSaving(true)
     setError(null)
     const payload = { ...form, price:parseInt(form.price)||0, badge:form.badge||null, sort_order:parseInt(form.sort_order)||0 }
@@ -62,6 +63,9 @@ export default function AdminProductForm() {
     } else {
       const { error: err } = await supabase.from('products').update(payload).eq('id', savedId || id)
       if (err) { setError(err.message); setSaving(false); return }
+      setSaving(false)
+      navigate('/admin/products')
+      return
     }
     setSaving(false)
   }
