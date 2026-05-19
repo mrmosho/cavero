@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '@/context/CartContext'
-import ProductIllustration from './illustrations/ProductIllustration'
+import ProductIllustration from '@/components/illustrations/ProductIllustration'
 
 export default function ProductCard({ product, delayClass = '' }) {
   const { addToCart } = useCart()
