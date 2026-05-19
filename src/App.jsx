@@ -7,24 +7,25 @@ import AdminGuard from '@/components/AdminGuard'
 import Nav from '@/components/Nav'
 
 // Store pages
-import Home from '@/pages/Home'
-import Shop from '@/pages/Shop'
-import Product from '@/pages/Product'
-import Gifting from '@/pages/Gifting'
-import About from '@/pages/About'
-import Contact from '@/pages/Contact'
-import Cart from '@/pages/Cart'
-import Checkout from '@/pages/Checkout'
+import Home              from '@/pages/Home'
+import Shop              from '@/pages/Shop'
+import Product           from '@/pages/Product'
+import Gifting           from '@/pages/Gifting'
+import About             from '@/pages/About'
+import Contact           from '@/pages/Contact'
+import Cart              from '@/pages/Cart'
+import Checkout          from '@/pages/Checkout'
 import OrderConfirmation from '@/pages/OrderConfirmation'
 
 // Admin pages
-import AdminLogin from '@/pages/admin/Login'
-import AdminDashboard from '@/pages/admin/Dashboard'
-import AdminOrders from '@/pages/admin/Orders'
-import AdminOrderDetail from '@/pages/admin/OrderDetail'
-import AdminProducts from '@/pages/admin/Products'
-import AdminProductForm from '@/pages/admin/ProductForm'
-import AdminSetPassword from '@/pages/admin/SetPassword'
+import AdminLogin        from '@/pages/admin/Login'
+import AdminDashboard    from '@/pages/admin/Dashboard'
+import AdminOrders       from '@/pages/admin/Orders'
+import AdminOrderDetail  from '@/pages/admin/OrderDetail'
+import AdminProducts     from '@/pages/admin/Products'
+import AdminProductForm    from '@/pages/admin/ProductForm'
+import AdminSetPassword    from '@/pages/admin/SetPassword'
+import AdminDiscountCodes  from '@/pages/admin/DiscountCodes'
 
 /**
  * Catches Supabase auth tokens in the URL hash.
@@ -40,7 +41,7 @@ function AuthCallbackHandler() {
 
     // Parse the hash fragment
     const params = new URLSearchParams(hash.replace('#', ''))
-    const type = params.get('type')
+    const type   = params.get('type')
 
     // Let Supabase pick up the session from the URL
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,14 +71,14 @@ function StoreLayout() {
     <>
       <Nav dark={pathname === '/'} />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/shop/:slug" element={<Product />} />
-        <Route path="/gifting" element={<Gifting />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/"                   element={<Home />} />
+        <Route path="/shop"               element={<Shop />} />
+        <Route path="/shop/:slug"         element={<Product />} />
+        <Route path="/gifting"            element={<Gifting />} />
+        <Route path="/about"              element={<About />} />
+        <Route path="/contact"            element={<Contact />} />
+        <Route path="/cart"               element={<Cart />} />
+        <Route path="/checkout"           element={<Checkout />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
       </Routes>
     </>
@@ -88,13 +89,14 @@ function AdminLayout() {
   return (
     <AdminProvider>
       <Routes>
-        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/login"        element={<AdminLogin />} />
         <Route path="/admin/set-password" element={<AdminSetPassword />} />
-        <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
-        <Route path="/admin/orders" element={<AdminGuard><AdminOrders /></AdminGuard>} />
-        <Route path="/admin/orders/:id" element={<AdminGuard><AdminOrderDetail /></AdminGuard>} />
-        <Route path="/admin/products" element={<AdminGuard><AdminProducts /></AdminGuard>} />
-        <Route path="/admin/products/:id" element={<AdminGuard><AdminProductForm /></AdminGuard>} />
+        <Route path="/admin"              element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+        <Route path="/admin/orders"       element={<AdminGuard><AdminOrders /></AdminGuard>} />
+        <Route path="/admin/orders/:id"   element={<AdminGuard><AdminOrderDetail /></AdminGuard>} />
+        <Route path="/admin/products"     element={<AdminGuard><AdminProducts /></AdminGuard>} />
+        <Route path="/admin/products/:id"      element={<AdminGuard><AdminProductForm /></AdminGuard>} />
+        <Route path="/admin/discount-codes"    element={<AdminGuard><AdminDiscountCodes /></AdminGuard>} />
       </Routes>
     </AdminProvider>
   )

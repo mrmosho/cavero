@@ -2,9 +2,10 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAdmin } from '@/context/AdminContext'
 
 const LINKS = [
-  { to: '/admin', label: 'Dashboard' },
-  { to: '/admin/orders', label: 'Orders' },
-  { to: '/admin/products', label: 'Products' },
+  { to: '/admin',          label: 'Dashboard' },
+  { to: '/admin/orders',   label: 'Orders' },
+  { to: '/admin/products',       label: 'Products' },
+  { to: '/admin/discount-codes',  label: 'Discounts' },
 ]
 
 export default function AdminNav() {
