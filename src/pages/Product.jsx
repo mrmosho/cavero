@@ -148,7 +148,6 @@ export default function Product() {
                 Add to cart
               </button>
             </div>
-            <button className="btn btn-outline btn-full" style={{ marginBottom:24 }}>Save to wishlist</button>
             <p className="product-info__notice">✦ Made to order · Ships in 5-7 days · Free Cairo delivery</p>
 
             {/* Accordion */}

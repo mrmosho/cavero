@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { ORDER_STATUS } from '@/lib/constants'
 import AdminNav from '@/components/AdminNav'
 
-const REVENUE_STATUSES = ['paid','in_production','ready_to_ship','shipped','delivered']
+const REVENUE_STATUSES = ['paid','completed','delivered']
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 function exportToCSV(orders, summary) {

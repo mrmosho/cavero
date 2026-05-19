@@ -29,6 +29,14 @@ export default function AdminOrderDetail() {
     setSaving(false)
   }
 
+  async function deleteOrder() {
+    if (!confirm('Permanently delete this order? This cannot be undone.')) return
+    if (!confirm('Are you sure? All order items will also be deleted.')) return
+    const { error } = await supabase.from('orders').delete().eq('id', id)
+    if (error) { alert('Failed to delete: ' + error.message); return }
+    navigate('/admin/orders')
+  }
+
   async function createBostaShipment() {
     setBosta({ loading:true, done:false, error:null })
     try {
@@ -128,6 +136,13 @@ export default function AdminOrderDetail() {
               <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)', marginBottom:12 }}>Quick contact</p>
               <a href={`mailto:${order.guest_email}`} className="btn btn-outline btn-sm btn-full" style={{ marginBottom:8, display:'block', textAlign:'center' }}>Email customer</a>
               <a href={`https://wa.me/${order.guest_phone?.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-bronze btn-sm btn-full" style={{ display:'block', textAlign:'center' }}>WhatsApp</a>
+            </div>
+            <div style={{ marginTop:16, padding:16, background:'#FEF2F2', borderRadius:'var(--r)', border:'1px solid #FECACA' }}>
+              <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'#991B1B', marginBottom:12 }}>Danger zone</p>
+              <button onClick={deleteOrder} style={{ width:'100%', padding:'10px', background:'#8B1A1A', color:'#fff', border:'none', borderRadius:'var(--r)', fontSize:'0.72rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', fontFamily:'var(--font-body)' }}>
+                Delete order
+              </button>
+              <p style={{ fontSize:'0.7rem', color:'#991B1B', marginTop:8, lineHeight:1.5 }}>Permanently removes this order and all its items.</p>
             </div>
           </div>
         </div>
