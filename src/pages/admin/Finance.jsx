@@ -82,7 +82,7 @@ export default function AdminFinance() {
   }
 
   // ── Computed stats ────────────────────────────────────────
-  const confirmed   = filtered.filter(o => REVENUE_STATUSES.includes(o.status))
+  const confirmed   = filtered.filter(o => REVENUE_STATUSES.includes(o.status) && o.status !== 'cancelled')
   const cancelled   = filtered.filter(o => o.status === 'cancelled')
   const totalRev    = confirmed.reduce((s,o) => s + (o.total||0), 0)
   const totalDisc   = filtered.reduce((s,o) => s + (o.discount_amount||0), 0)
@@ -106,15 +106,17 @@ export default function AdminFinance() {
     }
   })
 
-  // Product breakdown
+  // Product breakdown — explicitly only from paid/completed/delivered orders
   const productMap = {}
-  confirmed.forEach(o => {
-    (o.order_items||[]).forEach(item => {
-      if (!productMap[item.product_name]) productMap[item.product_name] = { qty: 0, revenue: 0 }
-      productMap[item.product_name].qty     += item.qty
-      productMap[item.product_name].revenue += item.unit_price * item.qty
+  filtered
+    .filter(o => ['paid','completed','delivered'].includes(o.status))
+    .forEach(o => {
+      (o.order_items||[]).forEach(item => {
+        if (!productMap[item.product_name]) productMap[item.product_name] = { qty: 0, revenue: 0 }
+        productMap[item.product_name].qty     += item.qty
+        productMap[item.product_name].revenue += item.unit_price * item.qty
+      })
     })
-  })
   const topProducts = Object.entries(productMap)
     .map(([name, d]) => ({ name, ...d }))
     .sort((a,b) => b.revenue - a.revenue)

@@ -26,19 +26,19 @@ export default function AdminDashboard() {
         supabase.from('orders').select('id, guest_name, guest_email, total, status, created_at, order_items(product_name, qty)').order('created_at', { ascending: false }).limit(10),
       ])
       const orders = ordersRes.data || []
-      const now = new Date()
+      const now   = new Date()
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const week = new Date(today); week.setDate(week.getDate() - 7)
+      const week  = new Date(today); week.setDate(week.getDate() - 7)
       const month = new Date(today); month.setDate(1)
       const inRange = (d, from) => new Date(d) >= from
-      const activeStatuses = ['pending_payment', 'paid', 'in_production', 'ready_to_ship', 'shipped', 'delivered']
+      const activeStatuses = ['paid', 'completed', 'delivered']
 
       setStats({
-        totalOrders: orders.length,
-        todayOrders: orders.filter(o => inRange(o.created_at, today)).length,
-        weekRevenue: orders.filter(o => inRange(o.created_at, week) && activeStatuses.includes(o.status)).reduce((s, o) => s + o.total, 0),
-        monthRevenue: orders.filter(o => inRange(o.created_at, month) && activeStatuses.includes(o.status)).reduce((s, o) => s + o.total, 0),
-        byStatus: Object.keys(ORDER_STATUS).reduce((acc, k) => { acc[k] = orders.filter(o => o.status === k).length; return acc }, {}),
+        totalOrders:   orders.length,
+        todayOrders:   orders.filter(o => inRange(o.created_at, today)).length,
+        weekRevenue:   orders.filter(o => inRange(o.created_at, week)  && activeStatuses.includes(o.status)).reduce((s, o) => s + o.total, 0),
+        monthRevenue:  orders.filter(o => inRange(o.created_at, month) && activeStatuses.includes(o.status)).reduce((s, o) => s + o.total, 0),
+        byStatus:      Object.keys(ORDER_STATUS).reduce((acc, k) => { acc[k] = orders.filter(o => o.status === k).length; return acc }, {}),
       })
       setRecentOrders(recentRes.data || [])
       setLoading(false)
@@ -63,10 +63,10 @@ export default function AdminDashboard() {
             {/* Stat cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 40 }}>
               {[
-                { label: 'Total orders', value: stats.totalOrders },
-                { label: 'Orders today', value: stats.todayOrders },
-                { label: 'Revenue this week', value: `EGP ${stats.weekRevenue.toLocaleString()}` },
-                { label: 'Revenue this month', value: `EGP ${stats.monthRevenue.toLocaleString()}` },
+                { label: 'Total orders',       value: stats.totalOrders },
+                { label: 'Orders today',        value: stats.todayOrders },
+                { label: 'Revenue this week',   value: `EGP ${stats.weekRevenue.toLocaleString()}` },
+                { label: 'Revenue this month',  value: `EGP ${stats.monthRevenue.toLocaleString()}` },
               ].map(s => (
                 <div key={s.label} style={{ background: '#fff', padding: 24, borderRadius: 'var(--r)', border: '1px solid rgba(45,43,52,0.08)' }}>
                   <p style={{ fontSize: '0.68rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--stone)', marginBottom: 12 }}>{s.label}</p>
