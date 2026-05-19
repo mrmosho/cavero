@@ -27,6 +27,8 @@ import AdminProductForm    from '@/pages/admin/ProductForm'
 import AdminSetPassword    from '@/pages/admin/SetPassword'
 import AdminDiscountCodes  from '@/pages/admin/DiscountCodes'
 import AdminFinance         from '@/pages/admin/Finance'
+import AdminContacts        from '@/pages/admin/Contacts'
+import AdminBlockList       from '@/pages/admin/BlockList'
 
 /**
  * Catches Supabase auth tokens in the URL hash.
@@ -99,6 +101,8 @@ function AdminLayout() {
         <Route path="/admin/products/:id"      element={<AdminGuard><AdminProductForm /></AdminGuard>} />
         <Route path="/admin/discount-codes"    element={<AdminGuard><AdminDiscountCodes /></AdminGuard>} />
         <Route path="/admin/finance"            element={<AdminGuard><AdminFinance /></AdminGuard>} />
+        <Route path="/admin/contacts"           element={<AdminGuard><AdminContacts /></AdminGuard>} />
+        <Route path="/admin/blocklist"          element={<AdminGuard><AdminBlockList /></AdminGuard>} />
       </Routes>
     </AdminProvider>
   )

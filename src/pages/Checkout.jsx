@@ -110,6 +110,18 @@ export default function Checkout() {
     setLoading(true)
     setServerError(null)
 
+    // Check if email is blocked
+    const { data: blocked } = await supabase
+      .from('blocked_emails')
+      .select('id')
+      .eq('email', form.email.toLowerCase().trim())
+      .maybeSingle()
+    if (blocked) {
+      setLoading(false)
+      setServerError('We are unable to process this order. Please contact us on WhatsApp.')
+      return
+    }
+
     const shippingAddress = {
       name: form.fullName, phone: form.phone,
       line1: form.line1, line2: form.line2 || null,
