@@ -202,7 +202,7 @@ export default function Checkout() {
                   <fieldset style={{ border:'none', marginBottom:32 }}>
                     <legend style={{ fontSize:'0.7rem', fontWeight:500, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--stone)', marginBottom:20 }}>Contact</legend>
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-                      <Field label="Full name" error={errors.fullName}><input className="form-input" type="text" value={form.fullName} onChange={set('fullName')} placeholder="Mariam Hassan" /></Field>
+                      <Field label="Full name" error={errors.fullName}><input className="form-input" type="text" value={form.fullName} onChange={set('fullName')} placeholder=" Your name " /></Field>
                       <Field label="Email address" error={errors.email}><input className="form-input" type="email" value={form.email} onChange={set('email')} placeholder="hello@example.com" /></Field>
                     </div>
                     <div style={{ marginTop:16 }}>

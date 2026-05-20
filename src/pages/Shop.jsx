@@ -11,8 +11,9 @@ const FILTERS = [
   { key:'all',      label:'All Objects' },
   { key:'vases',    label:'Vases & Planters' },
   { key:'desk',     label:'Desk Objects' },
-  { key:'gifts',    label:'Gifts' },
-  { key:'lighting', label:'Lighting' },
+  { key:'gifts',    label:'Couples & Gifts' },
+  { key:'lighting', label:'Candle Holders' },
+  { key:'specials', label:'Name Tags & Specials' },
   { key:'decor',    label:'Decor' },
 ]
 

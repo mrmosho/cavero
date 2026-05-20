@@ -7,7 +7,7 @@ import Footer from '@/components/Footer'
 import Toast from '@/components/Toast'
 
 const SECTIONS = [
-  { title:'For Couples',   sub:'Custom statues · Named pieces · Anniversary gifts', category:'gifts' },
+  { title:'Couples & Gifts', sub:'Custom statues · Named pieces · Anniversary gifts', category:'gifts' },
   { title:'For the Home',  sub:'Vases · Planters · Sculptural objects',             category:'vases' },
   { title:'For the Desk',  sub:'Stands · Holders · Weighted objects',               category:'desk' },
 ]

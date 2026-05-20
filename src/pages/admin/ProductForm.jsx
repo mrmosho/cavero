@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import AdminNav from '@/components/AdminNav'
 
 const EMPTY = { slug:'', name:'', price:'', category:'vases', label:'', description:'', details:'', badge:'', available:true, customisable:false, sort_order:0 }
-const CATEGORIES = ['vases','desk','gifts','lighting','decor']
+const CATEGORIES = ['vases','desk','gifts','lighting','specials','decor']
 const BADGES = ['','new','custom']
 const inp = { width:'100%', padding:'12px 14px', border:'1px solid rgba(45,43,52,0.2)', borderRadius:'var(--r)', fontSize:'0.9rem', color:'var(--charcoal)', background:'#fff', outline:'none', fontFamily:'var(--font-body)' }
 const lbl = { display:'block', fontSize:'0.68rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)', marginBottom:7 }

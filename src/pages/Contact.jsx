@@ -69,7 +69,7 @@ export default function Contact() {
             <form onSubmit={handleSubmit} ref={formRef}>
               <div className="form-group">
                 <label className="form-label">Your name</label>
-                <input className="form-input" type="text" value={form.name} onChange={set('name')} placeholder="Mariam Hassan" required />
+                <input className="form-input" type="text" value={form.name} onChange={set('name')} placeholder="Your Name" required />
               </div>
 
               <div className="form-group">
