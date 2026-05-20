@@ -1,20 +1,21 @@
 import { Link } from 'react-router-dom'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useProducts } from '@/hooks/useProducts'
+import { useCategories } from '@/hooks/useCategories'
 import ProductCard from '@/components/ProductCard'
 import Newsletter from '@/components/Newsletter'
 import Footer from '@/components/Footer'
 import Toast from '@/components/Toast'
 
-const SECTIONS = [
-  { title:'Couples & Gifts', sub:'Custom statues · Named pieces · Anniversary gifts', category:'gifts' },
-  { title:'For the Home',  sub:'Vases · Planters · Sculptural objects',             category:'vases' },
-  { title:'For the Desk',  sub:'Stands · Holders · Weighted objects',               category:'desk' },
-]
+// Categories to feature on gifting page
+const GIFTING_CATEGORIES = ['gifts', 'specials', 'vases', 'desk']
 
 export default function Gifting() {
-  const { products } = useProducts()
+  const { products }   = useProducts()
+  const { categories } = useCategories()
   useScrollReveal()
+
+  const giftingCats = categories.filter(c => GIFTING_CATEGORIES.includes(c.key))
 
   return (
     <>
@@ -32,18 +33,22 @@ export default function Gifting() {
           </div>
         </div>
 
-        {SECTIONS.map((section, si) => {
-          const sectionProducts = products.filter(p => p.category === section.category)
-          if (!sectionProducts.length) return null
+        {giftingCats.map((cat, si) => {
+          const catProducts = products.filter(p => p.category === cat.key)
+          if (!catProducts.length) return null
           return (
-            <section key={section.title} className="section" style={{ background: si % 2 === 0 ? 'var(--cream)' : 'var(--light)' }}>
+            <section key={cat.key} className="section" style={{ background: si % 2 === 0 ? 'var(--cream)' : 'var(--light)' }}>
               <div className="container">
                 <div className="section-header reveal">
-                  <div><h2 className="t-h2">{section.title}</h2><p className="t-label" style={{ marginTop:8 }}>{section.sub}</p></div>
-                  <Link to={`/shop?cat=${section.category}`} className="section-header__link">View all</Link>
+                  <div>
+                    <h2 className="t-h2">{cat.label}</h2>
+                  </div>
+                  <Link to={`/shop?cat=${cat.key}`} className="section-header__link">View all</Link>
                 </div>
                 <div className="grid-3 reveal d1">
-                  {sectionProducts.slice(0, 3).map((p, i) => <ProductCard key={p.slug || p.id} product={p} delayClass={`d${i+1}`} />)}
+                  {catProducts.slice(0, 3).map((p, i) => (
+                    <ProductCard key={p.slug || p.id} product={p} delayClass={`d${i+1}`} />
+                  ))}
                 </div>
               </div>
             </section>

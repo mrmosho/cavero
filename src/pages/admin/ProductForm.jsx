@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { useCategories } from '@/hooks/useCategories'
 import AdminNav from '@/components/AdminNav'
 
 const EMPTY = { slug:'', name:'', price:'', category:'vases', label:'', description:'', details:'', badge:'', available:true, customisable:false, sort_order:0 }
-const CATEGORIES = ['vases','desk','gifts','lighting','specials','decor']
 const BADGES = ['','new','custom']
 const inp = { width:'100%', padding:'12px 14px', border:'1px solid rgba(45,43,52,0.2)', borderRadius:'var(--r)', fontSize:'0.9rem', color:'var(--charcoal)', background:'#fff', outline:'none', fontFamily:'var(--font-body)' }
 const lbl = { display:'block', fontSize:'0.68rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)', marginBottom:7 }
@@ -15,6 +15,8 @@ export default function AdminProductForm() {
   const isNew        = id === 'new'
   const fileInputRef = useRef(null)
 
+  const { categories } = useCategories({ includeInactive: true })
+
   const [form,      setForm]      = useState(EMPTY)
   const [variants,  setVariants]  = useState([])
   const [images,    setImages]    = useState([])
@@ -24,6 +26,15 @@ export default function AdminProductForm() {
   const [uploading, setUploading] = useState(false)
   const [error,     setError]     = useState(null)
   const [savedId,   setSavedId]   = useState(isNew ? null : id)
+
+  // Auto-fill label when category changes
+  useEffect(() => {
+    if (!form.category || !categories.length) return
+    const cat = categories.find(c => c.key === form.category)
+    if (cat && (!form.label || categories.some(c => c.label === form.label))) {
+      setForm(p => ({ ...p, label: cat.label }))
+    }
+  }, [form.category, categories])
 
   useEffect(() => {
     if (isNew) return
@@ -47,7 +58,6 @@ export default function AdminProductForm() {
   const set      = f => e => setForm(p => ({ ...p, [f]: e.target.value }))
   const setCheck = f => e => setForm(p => ({ ...p, [f]: e.target.checked }))
 
-  // ── Save product ─────────────────────────────────────────
   async function handleSave(e) {
     e.preventDefault()
     if (!isNew && !confirm('Save changes to this product?')) return
@@ -58,7 +68,6 @@ export default function AdminProductForm() {
       const { data, error: err } = await supabase.from('products').insert(payload).select().single()
       if (err) { setError(err.message); setSaving(false); return }
       setSavedId(data.id)
-      // Stay on same URL but update the ID so images/variants work immediately
       navigate(`/admin/products/${data.id}`, { replace: true })
     } else {
       const { error: err } = await supabase.from('products').update(payload).eq('id', savedId || id)
@@ -70,42 +79,25 @@ export default function AdminProductForm() {
     setSaving(false)
   }
 
-  // ── Image upload ─────────────────────────────────────────
   async function handleImageUpload(e) {
-    const files   = Array.from(e.target.files)
-    const pid     = savedId || id
+    const files = Array.from(e.target.files)
+    const pid   = savedId || id
     if (!files.length || !pid) return
     setUploading(true)
     setError(null)
-
     for (const file of files) {
       if (!file.type.startsWith('image/')) { setError('Only image files are allowed.'); continue }
       if (file.size > 5 * 1024 * 1024)    { setError('Images must be under 5MB.'); continue }
-
       const ext      = file.name.split('.').pop().toLowerCase()
       const filename = `${pid}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-      const { error: uploadErr } = await supabase.storage
-        .from('product-images')
-        .upload(filename, file, { upsert: false })
-
+      const { error: uploadErr } = await supabase.storage.from('product-images').upload(filename, file, { upsert: false })
       if (uploadErr) { setError(`Upload failed: ${uploadErr.message}`); continue }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filename)
-
+      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(filename)
       const position = images.length
-      const { data: imgRow, error: dbErr } = await supabase
-        .from('product_images')
-        .insert({ product_id: pid, url: publicUrl, alt: form.name, position })
-        .select()
-        .single()
-
+      const { data: imgRow, error: dbErr } = await supabase.from('product_images').insert({ product_id: pid, url: publicUrl, alt: form.name, position }).select().single()
       if (dbErr) { setError(`DB error: ${dbErr.message}`); continue }
       setImages(prev => [...prev, imgRow])
     }
-
     setUploading(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -126,16 +118,11 @@ export default function AdminProductForm() {
     setImages(updated.sort((a,b) => a.position - b.position))
   }
 
-  // ── Variants ─────────────────────────────────────────────
   async function addVariant() {
     const pid = savedId || id
     if (!newVar.name.trim()) return
     if (!pid) { setError('Save the product first, then add variants.'); return }
-    const { data, error: err } = await supabase
-      .from('product_variants')
-      .insert({ product_id: pid, name: newVar.name, hex: newVar.hex, available: true })
-      .select()
-      .single()
+    const { data, error: err } = await supabase.from('product_variants').insert({ product_id: pid, name: newVar.name, hex: newVar.hex, available: true }).select().single()
     if (err) { setError(err.message); return }
     setVariants(prev => [...prev, data])
     setNewVar({ name:'', hex:'#2D2B34' })
@@ -156,18 +143,13 @@ export default function AdminProductForm() {
       <AdminNav />
       <div style={{ maxWidth:800, margin:'0 auto', padding:'40px 32px' }}>
         <div style={{ marginBottom:32 }}>
-          <button onClick={() => navigate('/admin/products')} style={{ fontSize:'0.72rem', color:'var(--stone)', background:'none', border:'none', cursor:'pointer', marginBottom:12 }}>
-            ← Back to products
-          </button>
-          <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:300 }}>
-            {isNew && !savedId ? 'Add product' : `Edit — ${form.name}`}
-          </h1>
+          <button onClick={() => navigate('/admin/products')} style={{ fontSize:'0.72rem', color:'var(--stone)', background:'none', border:'none', cursor:'pointer', marginBottom:12 }}>← Back to products</button>
+          <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:300 }}>{isNew && !savedId ? 'Add product' : `Edit — ${form.name}`}</h1>
         </div>
 
         {error && <div style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:'var(--r)', padding:'14px 18px', marginBottom:24, fontSize:'0.88rem', color:'#991B1B' }}>{error}</div>}
 
         <form onSubmit={handleSave}>
-          {/* Basic info */}
           <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:28, marginBottom:20 }}>
             <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--stone)', marginBottom:20 }}>Basic info</p>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
@@ -176,8 +158,13 @@ export default function AdminProductForm() {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:16, marginBottom:16 }}>
               <div><label style={lbl}>Price (EGP)</label><input style={inp} type="number" min="0" value={form.price} onChange={set('price')} required /></div>
-              <div><label style={lbl}>Category</label><select style={inp} value={form.category} onChange={set('category')}>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-              <div><label style={lbl}>Label</label><input style={inp} value={form.label} onChange={set('label')} placeholder="e.g. Vases" required /></div>
+              <div>
+                <label style={lbl}>Category</label>
+                <select style={inp} value={form.category} onChange={set('category')}>
+                  {categories.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                </select>
+              </div>
+              <div><label style={lbl}>Label</label><input style={inp} value={form.label} onChange={set('label')} placeholder="Auto-filled from category" required /></div>
               <div><label style={lbl}>Badge</label><select style={inp} value={form.badge} onChange={set('badge')}>{BADGES.map(b => <option key={b} value={b}>{b || '— none —'}</option>)}</select></div>
             </div>
             <div style={{ marginBottom:16 }}><label style={lbl}>Description</label><textarea style={{ ...inp, minHeight:80, resize:'vertical' }} value={form.description} onChange={set('description')} /></div>
@@ -195,85 +182,84 @@ export default function AdminProductForm() {
             </div>
           </div>
 
-          <div style={{ display:'flex', gap:12, justifyContent:'flex-end', marginBottom:20 }}>
-            <button type="button" className="btn btn-outline" onClick={() => navigate('/admin/products')}>Cancel</button>
-            <button type="submit" className="btn btn-bronze" disabled={saving}>{saving ? 'Saving...' : isNew && !savedId ? 'Create product' : 'Save changes'}</button>
-          </div>
-        </form>
-
-        {/* Images — show after product is saved */}
-        {pid && (
-          <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:28, marginBottom:20 }}>
-            <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--stone)', marginBottom:20 }}>Product images</p>
-            {images.length > 0 && (
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
-                {images.map((img) => (
-                  <div key={img.id} style={{ position:'relative', aspectRatio:'1', borderRadius:'var(--r)', overflow:'hidden', border:`2px solid ${img.position===0?'var(--bronze)':'rgba(45,43,52,0.1)'}` }}>
-                    <img src={img.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                    {img.position === 0 && (
-                      <span style={{ position:'absolute', top:6, left:6, background:'var(--bronze)', color:'#fff', fontSize:'0.6rem', fontWeight:500, padding:'2px 7px', borderRadius:100 }}>Primary</span>
-                    )}
-                    <div style={{ position:'absolute', bottom:0, left:0, right:0, display:'flex', gap:4, padding:6, background:'rgba(29,28,34,0.75)' }}>
-                      {img.position !== 0 && (
-                        <button type="button" onClick={() => handleSetPrimary(img.id)}
-                          style={{ flex:1, padding:'4px', background:'rgba(168,149,111,0.9)', color:'#fff', border:'none', borderRadius:2, fontSize:'0.6rem', cursor:'pointer', fontFamily:'var(--font-body)' }}>
-                          Set primary
-                        </button>
-                      )}
-                      <button type="button" onClick={() => handleDeleteImage(img.id, img.url)}
-                        style={{ flex:1, padding:'4px', background:'rgba(139,26,26,0.85)', color:'#fff', border:'none', borderRadius:2, fontSize:'0.6rem', cursor:'pointer', fontFamily:'var(--font-body)' }}>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              style={{ border:'2px dashed rgba(45,43,52,0.2)', borderRadius:'var(--r)', padding:32, textAlign:'center', cursor:'pointer', background:'#FAFAF8' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor='var(--bronze)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor='rgba(45,43,52,0.2)'}>
-              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display:'none' }} />
-              <p style={{ fontSize:'0.88rem', color:'var(--stone)', marginBottom:4 }}>{uploading ? 'Uploading...' : 'Click to upload images'}</p>
-              <p style={{ fontSize:'0.75rem', color:'var(--stone)' }}>JPG, PNG, WebP · Max 5MB each · Multiple allowed</p>
-            </div>
-          </div>
-        )}
-
-        {/* Variants — show after product is saved */}
-        {pid && (
+          {/* Colour variants — available on new AND existing products */}
           <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:28, marginBottom:20 }}>
             <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--stone)', marginBottom:20 }}>Colour variants</p>
+            {!pid && (
+              <div style={{ background:'rgba(168,149,111,0.08)', border:'1px solid rgba(168,149,111,0.2)', borderRadius:'var(--r)', padding:'12px 16px', marginBottom:16 }}>
+                <p style={{ fontSize:'0.8rem', color:'var(--charcoal)' }}>Save the product first to start adding variants — they will appear here immediately after.</p>
+              </div>
+            )}
             {variants.length > 0 && (
               <div style={{ display:'flex', flexWrap:'wrap', gap:10, marginBottom:20 }}>
                 {variants.map(v => (
                   <div key={v.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 14px', background:'#F8F6F0', borderRadius:100, fontSize:'0.78rem' }}>
                     <div style={{ width:14, height:14, borderRadius:'50%', background:v.hex, border:'1px solid rgba(45,43,52,0.15)', flexShrink:0 }} />
                     {v.name}
-                    <button type="button" onClick={() => removeVariant(v.id)}
-                      style={{ background:'none', border:'none', cursor:'pointer', fontSize:'1rem', color:'var(--stone)', padding:0, lineHeight:1 }}>×</button>
+                    {pid && <button type="button" onClick={() => removeVariant(v.id)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'1rem', color:'var(--stone)', padding:0, lineHeight:1 }}>×</button>}
                   </div>
                 ))}
               </div>
             )}
-            <div style={{ display:'flex', gap:10, alignItems:'flex-end' }}>
-              <div style={{ flex:1 }}>
-                <label style={lbl}>Name</label>
-                <input style={inp} placeholder="e.g. Forest Green" value={newVar.name} onChange={e => setNewVar(p => ({ ...p, name:e.target.value }))} />
-              </div>
-              <div>
-                <label style={lbl}>Colour</label>
-                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <input type="color" value={newVar.hex} onChange={e => setNewVar(p => ({ ...p, hex:e.target.value }))}
-                    style={{ width:44, height:44, borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.2)', cursor:'pointer', padding:2 }} />
-                  <input style={{ ...inp, width:110 }} value={newVar.hex} onChange={e => setNewVar(p => ({ ...p, hex:e.target.value }))} />
+            {pid && (
+              <div style={{ display:'flex', gap:10, alignItems:'flex-end' }}>
+                <div style={{ flex:1 }}>
+                  <label style={lbl}>Colour name</label>
+                  <input style={inp} placeholder="e.g. Forest Green" value={newVar.name} onChange={e => setNewVar(p => ({ ...p, name:e.target.value }))} />
                 </div>
+                <div>
+                  <label style={lbl}>Colour</label>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <input type="color" value={newVar.hex} onChange={e => setNewVar(p => ({ ...p, hex:e.target.value }))}
+                      style={{ width:44, height:44, borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.2)', cursor:'pointer', padding:2 }} />
+                    <input style={{ ...inp, width:110 }} value={newVar.hex} onChange={e => setNewVar(p => ({ ...p, hex:e.target.value }))} />
+                  </div>
+                </div>
+                <button type="button" className="btn btn-outline" onClick={addVariant}>Add</button>
               </div>
-              <button type="button" className="btn btn-outline" onClick={addVariant}>Add</button>
-            </div>
+            )}
           </div>
-        )}
+
+          {/* Images — available after save */}
+          {pid && (
+            <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:28, marginBottom:20 }}>
+              <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--stone)', marginBottom:20 }}>Product images</p>
+              {images.length > 0 && (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
+                  {images.map((img) => (
+                    <div key={img.id} style={{ position:'relative', aspectRatio:'1', borderRadius:'var(--r)', overflow:'hidden', border:`2px solid ${img.position===0?'var(--bronze)':'rgba(45,43,52,0.1)'}` }}>
+                      <img src={img.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                      {img.position === 0 && (
+                        <span style={{ position:'absolute', top:6, left:6, background:'var(--bronze)', color:'#fff', fontSize:'0.6rem', fontWeight:500, padding:'2px 7px', borderRadius:100 }}>Primary</span>
+                      )}
+                      <div style={{ position:'absolute', bottom:0, left:0, right:0, display:'flex', gap:4, padding:6, background:'rgba(29,28,34,0.75)' }}>
+                        {img.position !== 0 && (
+                          <button type="button" onClick={() => handleSetPrimary(img.id)}
+                            style={{ flex:1, padding:'4px', background:'rgba(168,149,111,0.9)', color:'#fff', border:'none', borderRadius:2, fontSize:'0.6rem', cursor:'pointer', fontFamily:'var(--font-body)' }}>Set primary</button>
+                        )}
+                        <button type="button" onClick={() => handleDeleteImage(img.id, img.url)}
+                          style={{ flex:1, padding:'4px', background:'rgba(139,26,26,0.85)', color:'#fff', border:'none', borderRadius:2, fontSize:'0.6rem', cursor:'pointer', fontFamily:'var(--font-body)' }}>Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div onClick={() => fileInputRef.current?.click()}
+                style={{ border:'2px dashed rgba(45,43,52,0.2)', borderRadius:'var(--r)', padding:32, textAlign:'center', cursor:'pointer', background:'#FAFAF8' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor='var(--bronze)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor='rgba(45,43,52,0.2)'}>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display:'none' }} />
+                <p style={{ fontSize:'0.88rem', color:'var(--stone)', marginBottom:4 }}>{uploading ? 'Uploading...' : 'Click to upload images'}</p>
+                <p style={{ fontSize:'0.75rem', color:'var(--stone)' }}>JPG, PNG, WebP · Max 5MB each · Multiple allowed</p>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display:'flex', gap:12, justifyContent:'flex-end' }}>
+            <button type="button" className="btn btn-outline" onClick={() => navigate('/admin/products')}>Cancel</button>
+            <button type="submit" className="btn btn-bronze" disabled={saving}>{saving ? 'Saving...' : isNew && !savedId ? 'Create product' : 'Save changes'}</button>
+          </div>
+        </form>
       </div>
     </div>
   )

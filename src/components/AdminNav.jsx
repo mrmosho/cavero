@@ -9,6 +9,7 @@ const LINKS = [
   { to: '/admin/finance',          label: 'Finance' },
   { to: '/admin/contacts',          label: 'Messages' },
   { to: '/admin/blocklist',         label: 'Block List' },
+  { to: '/admin/categories',        label: 'Categories' },
 ]
 
 export default function AdminNav() {
