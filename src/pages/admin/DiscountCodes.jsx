@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import AdminNav from '@/components/AdminNav'
+import { logAction } from '@/lib/audit'
+import { useAdmin } from '@/context/AdminContext'
 
 function generateCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -17,6 +19,7 @@ export default function AdminDiscountCodes() {
   const [newCode, setNewCode]  = useState({ email:'', percent_off:'10', hours:'24' })
   const [showForm, setShowForm] = useState(false)
   const [error, setError]      = useState(null)
+  const { user }               = useAdmin()
 
   useEffect(() => { load() }, [])
 
@@ -55,6 +58,7 @@ export default function AdminDiscountCodes() {
 
     setCreating(false)
     if (err) { setError(err.message); return }
+    await logAction({ userEmail: user?.email, action: 'Generated discount code', targetType:'discount_code', targetName: newCode.email, details: { code, percent_off: parseInt(newCode.percent_off), hours: parseInt(newCode.hours) } })
     setNewCode({ email:'', percent_off:'10', hours:'24' })
     setShowForm(false)
     load()

@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import AdminNav from '@/components/AdminNav'
+import { logAction } from '@/lib/audit'
+import { useAdmin } from '@/context/AdminContext'
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const { user }  = useAdmin()
 
   useEffect(() => { load() }, [])
 
@@ -25,6 +28,7 @@ export default function AdminProducts() {
   async function deleteProduct(id, name) {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
     await supabase.from('products').delete().eq('id', id)
+    await logAction({ userEmail: user?.email, action: 'Deleted product', targetType:'product', targetId: id, targetName: name })
     setProducts(prev => prev.filter(p => p.id !== id))
   }
 

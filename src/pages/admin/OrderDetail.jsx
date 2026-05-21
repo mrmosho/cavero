@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { ORDER_STATUS } from '@/lib/constants'
 import AdminNav from '@/components/AdminNav'
+import { useAdmin } from '@/context/AdminContext'
+import { logAction } from '@/lib/audit'
 import { StatusBadge } from './Dashboard'
 
 export default function AdminOrderDetail() {
@@ -25,7 +27,10 @@ export default function AdminOrderDetail() {
   async function updateStatus(newStatus) {
     setSaving(true)
     const { data } = await supabase.from('orders').update({ status: newStatus }).eq('id', id).select('*, order_items(*)').single()
-    if (data) setOrder(data)
+    if (data) {
+      setOrder(data)
+      await logAction({ userEmail: user?.email, action: `Changed order status to "${newStatus}"`, targetType:'order', targetId: id, targetName: order?.guest_name, details: { from: order?.status, to: newStatus } })
+    }
     setSaving(false)
   }
 
@@ -34,6 +39,7 @@ export default function AdminOrderDetail() {
     if (!confirm('Are you sure? All order items will also be deleted.')) return
     const { error } = await supabase.from('orders').delete().eq('id', id)
     if (error) { alert('Failed to delete: ' + error.message); return }
+    await logAction({ userEmail: user?.email, action: 'Deleted order', targetType:'order', targetId: id, targetName: order?.guest_name, details: { total: order?.total, status: order?.status } })
     navigate('/admin/orders')
   }
 

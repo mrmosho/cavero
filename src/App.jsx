@@ -30,6 +30,7 @@ import AdminFinance         from '@/pages/admin/Finance'
 import AdminContacts        from '@/pages/admin/Contacts'
 import AdminBlockList       from '@/pages/admin/BlockList'
 import AdminCategories      from '@/pages/admin/Categories'
+import AdminChangelog       from '@/pages/admin/Changelog'
 
 /**
  * Catches Supabase auth tokens in the URL hash.
@@ -105,6 +106,7 @@ function AdminLayout() {
         <Route path="/admin/contacts"           element={<AdminGuard><AdminContacts /></AdminGuard>} />
         <Route path="/admin/blocklist"          element={<AdminGuard><AdminBlockList /></AdminGuard>} />
         <Route path="/admin/categories"         element={<AdminGuard><AdminCategories /></AdminGuard>} />
+        <Route path="/admin/changelog"          element={<AdminGuard><AdminChangelog /></AdminGuard>} />
       </Routes>
     </AdminProvider>
   )

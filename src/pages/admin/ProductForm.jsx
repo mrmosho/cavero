@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useCategories } from '@/hooks/useCategories'
+import { logAction } from '@/lib/audit'
+import { useAdmin } from '@/context/AdminContext'
 import AdminNav from '@/components/AdminNav'
 
 const EMPTY = { slug:'', name:'', price:'', category:'vases', label:'', description:'', details:'', badge:'', available:true, customisable:false, sort_order:0 }
@@ -15,6 +17,7 @@ export default function AdminProductForm() {
   const isNew        = id === 'new'
   const fileInputRef = useRef(null)
 
+  const { user }       = useAdmin()
   const { categories } = useCategories({ includeInactive: true })
 
   const [form,      setForm]      = useState(EMPTY)
@@ -67,11 +70,13 @@ export default function AdminProductForm() {
     if (isNew) {
       const { data, error: err } = await supabase.from('products').insert(payload).select().single()
       if (err) { setError(err.message); setSaving(false); return }
+      await logAction({ userEmail: user?.email, action: 'Created product', targetType:'product', targetId: data.id, targetName: data.name, details: { price: data.price, category: data.category } })
       setSavedId(data.id)
       navigate(`/admin/products/${data.id}`, { replace: true })
     } else {
       const { error: err } = await supabase.from('products').update(payload).eq('id', savedId || id)
       if (err) { setError(err.message); setSaving(false); return }
+      await logAction({ userEmail: user?.email, action: 'Updated product', targetType:'product', targetId: savedId || id, targetName: form.name, details: { price: payload.price, available: payload.available } })
       setSaving(false)
       navigate('/admin/products')
       return

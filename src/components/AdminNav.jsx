@@ -12,6 +12,8 @@ const LINKS = [
   { to: '/admin/categories',        label: 'Categories' },
 ]
 
+const OWNER_EMAIL = 'omarhusam1711@gmail.com'
+
 export default function AdminNav() {
   const { logout, user } = useAdmin()
   const { pathname } = useLocation()
@@ -22,7 +24,7 @@ export default function AdminNav() {
         <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 300, color: 'var(--cream)', letterSpacing: '0.12em' }}>Cavero</span>
         <span style={{ fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--stone)', borderLeft: '1px solid rgba(232,228,216,0.15)', paddingLeft: 16 }}>Admin</span>
         <div style={{ display: 'flex', gap: 4, marginLeft: 8 }}>
-          {LINKS.map(l => (
+          {[...LINKS, ...(user?.email === OWNER_EMAIL ? [{ to:'/admin/changelog', label:'Changelog' }] : [])].map(l => (
             <Link key={l.to} to={l.to}
               style={{ fontSize: '0.72rem', fontWeight: 400, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: 'var(--r)', color: pathname === l.to ? 'var(--cream)' : 'var(--stone)', background: pathname === l.to ? 'rgba(232,228,216,0.1)' : 'transparent', transition: 'all 0.2s', textDecoration: 'none' }}>
               {l.label}
