@@ -45,8 +45,13 @@ export default function CartDrawer() {
             <span style={{ color:'var(--stone)' }}>Subtotal</span>
             <span style={{ fontWeight:500 }}>EGP {cartTotal.toLocaleString()}</span>
           </div>
-          <Link to="/cart" className="btn btn-primary btn-full" onClick={close}>View Cart</Link>
-          <Link to="/checkout" className="btn btn-bronze btn-full" style={{ marginTop:8 }} onClick={close}>Checkout</Link>
+          <Link to="/cart" className="btn btn-outline btn-full" onClick={close} style={{ marginBottom:8, display:'block', textAlign:'center' }}>View Cart</Link>
+          <Link to="/checkout" className="btn btn-full" onClick={close}
+            style={{ display:'block', textAlign:'center', background:'rgba(168,149,111,0.65)', color:'#fff', transition:'background 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.background='var(--bronze)'}
+            onMouseLeave={e => e.currentTarget.style.background='rgba(168,149,111,0.65)'}>
+            Checkout
+          </Link>
           <p style={{ marginTop:12, fontSize:'.72rem', color:'var(--stone)', textAlign:'center' }}>Made to order · Ships in 5–7 days</p>
         </div>
       </div>

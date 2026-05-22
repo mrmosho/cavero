@@ -14,32 +14,17 @@ export default function Contact() {
   useScrollReveal()
 
   const set = f => e => setForm(prev => ({ ...prev, [f]: e.target.value }))
+  const isCustom = form.subject === 'custom'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     try {
-      // Check if email is blocked (if provided)
       if (form.email) {
-        const { data: blocked } = await supabase
-          .from('blocked_emails')
-          .select('id')
-          .eq('email', form.email.toLowerCase().trim())
-          .maybeSingle()
-        if (blocked) {
-          showToast('Unable to send message. Please contact us on WhatsApp.')
-          setLoading(false)
-          return
-        }
+        const { data: blocked } = await supabase.from('blocked_emails').select('id').eq('email', form.email.toLowerCase().trim()).maybeSingle()
+        if (blocked) { showToast('Unable to send message. Please contact us on WhatsApp.'); setLoading(false); return }
       }
-
-      const { error } = await supabase.from('contact_enquiries').insert({
-        name:    form.name,
-        phone:   form.phone || null,
-        email:   form.email || null,
-        subject: form.subject,
-        message: form.message,
-      })
+      const { error } = await supabase.from('contact_enquiries').insert({ name:form.name, phone:form.phone||null, email:form.email||null, subject:form.subject, message:form.message })
       if (error) throw error
       showToast("Message sent — we'll be in touch soon ✦")
       setForm({ name:'', phone:'', email:'', subject:'general', message:'' })
@@ -67,6 +52,20 @@ export default function Contact() {
 
           <div className="contact-grid reveal d3" style={{ marginTop:60 }}>
             <form onSubmit={handleSubmit} ref={formRef}>
+
+              {/* Custom order banner — shown when subject is custom */}
+              {isCustom && (
+                <div style={{ background:'var(--charcoal)', color:'var(--cream)', borderRadius:'var(--r)', padding:'20px 24px', marginBottom:28, display:'flex', gap:16, alignItems:'flex-start', animation:'fadeSlideUp 0.4s var(--ease-out) both' }}>
+                  <div style={{ fontSize:'1.4rem', flexShrink:0, marginTop:2 }}>✦</div>
+                  <div>
+                    <p style={{ fontFamily:'var(--font-display)', fontSize:'1.1rem', fontWeight:400, marginBottom:6, color:'var(--cream)' }}>You are starting a custom order</p>
+                    <p style={{ fontSize:'0.82rem', color:'rgba(232,228,216,0.72)', lineHeight:1.7 }}>
+                      Please fill in your name and phone number so we can reach you, then describe your custom order in detail below — what you want, colours, size, occasion, and any personal touches.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="form-group">
                 <label className="form-label">Your name</label>
                 <input className="form-input" type="text" value={form.name} onChange={set('name')} placeholder="Your Name" required />
@@ -89,7 +88,8 @@ export default function Contact() {
 
               <div className="form-group">
                 <label className="form-label">Subject</label>
-                <select className="form-input" value={form.subject} onChange={set('subject')}>
+                <select className="form-input" value={form.subject} onChange={set('subject')}
+                  style={{ borderColor: isCustom ? 'var(--bronze)' : undefined }}>
                   <option value="general">General enquiry</option>
                   <option value="custom">Custom order</option>
                   <option value="order">Existing order</option>
@@ -98,20 +98,46 @@ export default function Contact() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Message</label>
-                <textarea className="form-textarea" ref={messageRef} value={form.message} onChange={set('message')} placeholder="Tell us what you have in mind..." required />
+                <label className="form-label">
+                  {isCustom ? (
+                    <span style={{ color:'var(--charcoal)', display:'flex', alignItems:'center', gap:8 }}>
+                      Describe your custom order
+                      <span style={{ background:'var(--bronze)', color:'#fff', fontSize:'0.6rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', padding:'2px 8px', borderRadius:100 }}>Custom</span>
+                    </span>
+                  ) : 'Leave us a message'}
+                </label>
+                <textarea
+                  className="form-textarea"
+                  ref={messageRef}
+                  value={form.message}
+                  onChange={set('message')}
+                  placeholder={isCustom
+                    ? "Describe your custom order in detail — what you want, colours, size, occasion, names or text to include, and any references or inspiration..."
+                    : "Tell us what you have in mind..."}
+                  style={{
+                    minHeight: isCustom ? 160 : 120,
+                    borderColor: isCustom ? 'var(--bronze)' : undefined,
+                    transition: 'min-height 0.3s, border-color 0.2s',
+                  }}
+                  required
+                />
+                {isCustom && (
+                  <p style={{ fontSize:'0.72rem', color:'var(--stone)', marginTop:6, lineHeight:1.6 }}>
+                    The more detail you give us, the better we can bring your vision to life.
+                  </p>
+                )}
               </div>
 
               <button type="submit" className="btn btn-bronze btn-full" disabled={loading}>
-                {loading ? 'Sending...' : 'Send message'}
+                {loading ? 'Sending...' : isCustom ? 'Send custom order request' : 'Send message'}
               </button>
             </form>
 
             <div className="contact-info" style={{ paddingTop:48 }}>
               {[
-                ['✉', 'Email',   'caveroegy@gmail.com'],
-                ['💬', 'WhatsApp','Available 10am – 8pm (Sun–Thu)'],
-                ['📍', 'Studio',  'Cairo, Egypt'],
+                ['✉', 'Email',    'caveroegy@gmail.com'],
+                ['💬', 'WhatsApp', 'Available 10am – 8pm (Sun–Thu)'],
+                ['📍', 'Studio',   'Cairo, Egypt'],
               ].map(([icon, label, value]) => (
                 <div className="contact-info__item" key={label}>
                   <div className="contact-info__icon">{icon}</div>

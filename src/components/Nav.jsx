@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useCart } from '@/context/CartContext'
 import { useNavScroll } from '@/hooks/useNavScroll'
@@ -14,7 +14,17 @@ const NAV_LINKS = [
 
 export default function Nav({ dark = false }) {
   const { cartCount, drawerOpen, setDrawerOpen } = useCart()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [cartFlash,  setCartFlash]  = useState(false)
+  const prevCount = useRef(cartCount)
+
+  useEffect(() => {
+    if (cartCount > prevCount.current) {
+      setCartFlash(true)
+      setTimeout(() => setCartFlash(false), 500)
+    }
+    prevCount.current = cartCount
+  }, [cartCount])
   const scrolled   = useNavScroll()
   const { pathname } = useLocation()
 
@@ -69,13 +79,13 @@ export default function Nav({ dark = false }) {
           </div>
 
           <div className="nav__actions">
-            <button className="nav__icon" style={{ color: textColor }} onClick={() => setDrawerOpen(true)} aria-label="Open cart">
+            <button className={`nav__icon${cartFlash ? ' cart-icon-flash' : ''}`} style={{ color: textColor }} onClick={() => setDrawerOpen(true)} aria-label="Open cart">
               <svg className="icon" viewBox="0 0 24 24">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
                 <line x1="3" y1="6" x2="21" y2="6"/>
                 <path d="M16 10a4 4 0 01-8 0"/>
               </svg>
-              {cartCount > 0 && <span className="nav__cart-count">{cartCount}</span>}
+              {cartCount > 0 && <span className={`nav__cart-count${cartFlash ? ' cart-count-pop' : ''}`}>{cartCount}</span>}
             </button>
             <button className="nav__hamburger" style={{ color: textColor }} onClick={() => setMenuOpen(true)} aria-label="Open menu">
               <span/><span/><span/>

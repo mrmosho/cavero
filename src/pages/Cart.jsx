@@ -57,7 +57,11 @@ export default function Cart() {
                 <div className="cart-summary__row"><span>Shipping</span><span>{shipping === 0 ? 'Free' : `EGP ${shipping}`}</span></div>
                 <div className="cart-summary__row cart-summary__row--total"><span>Total</span><span>EGP {total.toLocaleString()}</span></div>
                 {shipping > 0 && <p className="cart-summary__notice">Free shipping on orders over EGP 1,000</p>}
-                <Link to="/checkout" className="btn btn-bronze btn-full" style={{ marginTop:24 }}>Proceed to Checkout</Link>
+                <Link to="/checkout" className="btn btn-full" style={{ marginTop:24, background:'rgba(168,149,111,0.65)', color:'#fff', transition:'background 0.2s', display:'flex', alignItems:'center', justifyContent:'center' }}
+                onMouseEnter={e => e.currentTarget.style.background='var(--bronze)'}
+                onMouseLeave={e => e.currentTarget.style.background='rgba(168,149,111,0.65)'}>
+                Proceed to Checkout
+              </Link>
                 <p className="cart-summary__notice" style={{ marginTop:12 }}>Made to order · Ships in 5-7 days</p>
               </div>
             </div>

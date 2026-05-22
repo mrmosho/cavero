@@ -144,7 +144,11 @@ export default function Product() {
                 <span style={{ minWidth:24, textAlign:'center' }}>{qty}</span>
                 <button className="qty-btn" onClick={() => setQty(q => Math.min(10, q+1))}>+</button>
               </div>
-              <button className="btn btn-bronze" style={{ flex:1 }}
+              <button
+                className="btn"
+                style={{ flex:1, background:'rgba(168,149,111,0.65)', color:'#fff', transition:'background 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bronze)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(168,149,111,0.65)'}
                 onClick={() => addToCart(slug, qty, { variantName: colour?.name || null, personalisationNote: note || null })}>
                 Add to cart
               </button>
