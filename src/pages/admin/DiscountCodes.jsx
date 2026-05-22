@@ -66,7 +66,9 @@ export default function AdminDiscountCodes() {
 
   async function deactivate(codeId) {
     if (!confirm('Deactivate this code? It will expire immediately.')) return
+    const code = codes.find(c => c.id === codeId)
     await supabase.from('discount_codes').update({ expires_at: new Date().toISOString() }).eq('id', codeId)
+    await logAction({ userEmail: user?.email, action: 'Deactivated discount code', targetType:'discount_code', targetName: code?.code, details: { email: code?.email } })
     load()
   }
 
@@ -99,7 +101,7 @@ export default function AdminDiscountCodes() {
   return (
     <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth:1100, margin:'0 auto', padding:'40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:1100, margin:'0 auto', padding:'40px 32px' }}>
         <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:32 }}>
           <div>
             <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:300 }}>Discount Codes</h1>

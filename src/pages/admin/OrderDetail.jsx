@@ -10,6 +10,7 @@ import { StatusBadge } from './Dashboard'
 export default function AdminOrderDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAdmin()
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -65,7 +66,7 @@ export default function AdminOrderDetail() {
   return (
     <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth:1000, margin:'0 auto', padding:'40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:1000, margin:'0 auto', padding:'40px 32px' }}>
         <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:32 }}>
           <div>
             <button onClick={() => navigate('/admin/orders')} style={{ fontSize:'0.72rem', color:'var(--stone)', background:'none', border:'none', cursor:'pointer', marginBottom:12 }}>← Back to orders</button>

@@ -107,7 +107,7 @@ export default function Checkout() {
         <div className="container">
           <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:300, marginBottom:40 }}>Checkout</h1>
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 400px', gap:60, alignItems:'start' }}>
+          <div className="checkout-layout" style={{ display:'grid', gridTemplateColumns:'1fr 400px', gap:60, alignItems:'start' }}>
 
             {/* ── LEFT — form ── */}
             <div>
@@ -118,7 +118,7 @@ export default function Checkout() {
               {/* Contact */}
               <Section title="Contact">
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
-                  <Field label="Full name" error={errors.fullName}><input className="form-input" type="text" value={form.fullName} onChange={set('fullName')} placeholder="Mariam Hassan" /></Field>
+                  <Field label="Full name" error={errors.fullName}><input className="form-input" type="text" value={form.fullName} onChange={set('fullName')} placeholder="Your Name" /></Field>
                   <Field label="Email address" error={errors.email}><input className="form-input" type="email" value={form.email} onChange={set('email')} placeholder="hello@example.com" /></Field>
                 </div>
                 <Field label="Phone number" error={errors.phone}><input className="form-input" type="tel" value={form.phone} onChange={set('phone')} placeholder="+20 1XX XXX XXXX" /></Field>
@@ -186,7 +186,7 @@ export default function Checkout() {
             </div>
 
             {/* ── RIGHT — order summary + place order ── */}
-            <div style={{ position:'sticky', top:'calc(var(--nav-h) + 24px)' }}>
+            <div className="checkout-order-summary" style={{ position:'sticky', top:'calc(var(--nav-h) + 24px)' }}>
               <div style={{ background:'var(--charcoal)', color:'var(--cream)', padding:32, borderRadius:'var(--r)', marginBottom:16 }}>
                 <div style={{ fontFamily:'var(--font-display)', fontSize:'1.3rem', fontWeight:300, marginBottom:20 }}>Your order</div>
 

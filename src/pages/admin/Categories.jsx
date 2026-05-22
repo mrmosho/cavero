@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import AdminNav from '@/components/AdminNav'
+import { logAction } from '@/lib/audit'
+import { useAdmin } from '@/context/AdminContext'
 
 const inp = { width:'100%', padding:'11px 14px', border:'1px solid rgba(45,43,52,0.2)', borderRadius:'var(--r)', fontSize:'0.9rem', color:'var(--charcoal)', background:'#fff', outline:'none', fontFamily:'var(--font-body)' }
 const lbl = { display:'block', fontSize:'0.68rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)', marginBottom:7 }
@@ -14,6 +16,7 @@ export default function AdminCategories() {
   const [editForm,   setEditForm]   = useState({})
   const [error,      setError]      = useState(null)
   const [saving,     setSaving]     = useState(false)
+  const { user }                       = useAdmin()
 
   useEffect(() => { load() }, [])
 
@@ -40,6 +43,7 @@ export default function AdminCategories() {
     setSaving(false)
     if (err?.code === '23505') { setError('A category with this key already exists.'); return }
     if (err) { setError(err.message); return }
+    await logAction({ userEmail: user?.email, action: 'Created category', targetType:'category', targetName: newCat.label, details: { key: newCat.key } })
     setNewCat({ key:'', label:'', sort_order:'' })
     setShowForm(false)
     load()
@@ -59,12 +63,15 @@ export default function AdminCategories() {
     }).eq('id', id)
     setSaving(false)
     if (err) { setError(err.message); return }
+    await logAction({ userEmail: user?.email, action: 'Updated category', targetType:'category', targetId: id, targetName: editForm.label, details: { label: editForm.label, sort_order: editForm.sort_order, active: editForm.active } })
     setEditing(null)
     load()
   }
 
   async function toggleActive(id, current) {
     await supabase.from('categories').update({ active: !current }).eq('id', id)
+    const cat = categories.find(c => c.id === id)
+    await logAction({ userEmail: user?.email, action: `${!current ? 'Activated' : 'Deactivated'} category`, targetType:'category', targetId: id, targetName: cat?.label })
     setCategories(prev => prev.map(c => c.id === id ? { ...c, active: !current } : c))
   }
 
@@ -80,14 +87,16 @@ export default function AdminCategories() {
       return
     }
     if (!confirm('Delete this category? This cannot be undone.')) return
+    const cat = categories.find(c => c.id === id)
     await supabase.from('categories').delete().eq('id', id)
+    await logAction({ userEmail: user?.email, action: 'Deleted category', targetType:'category', targetId: id, targetName: cat?.label, details: { key } })
     load()
   }
 
   return (
     <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth:900, margin:'0 auto', padding:'40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:900, margin:'0 auto', padding:'40px 32px' }}>
 
         <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:32 }}>
           <div>

@@ -68,11 +68,11 @@ export default function AdminOrders() {
 
   const filtered = search.trim()
     ? orders.filter(o =>
-      o.guest_name?.toLowerCase().includes(search.toLowerCase()) ||
-      o.guest_email?.toLowerCase().includes(search.toLowerCase()) ||
-      o.guest_phone?.includes(search) ||
-      o.id.includes(search.toLowerCase())
-    )
+        o.guest_name?.toLowerCase().includes(search.toLowerCase()) ||
+        o.guest_email?.toLowerCase().includes(search.toLowerCase()) ||
+        o.guest_phone?.includes(search) ||
+        o.id.includes(search.toLowerCase())
+      )
     : orders
 
   async function handleExport() {

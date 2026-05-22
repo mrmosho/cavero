@@ -22,6 +22,8 @@ export default function AdminProducts() {
 
   async function toggleAvailable(id, current) {
     await supabase.from('products').update({ available: !current }).eq('id', id)
+    const product = products.find(p => p.id === id)
+    await logAction({ userEmail: user?.email, action: `${!current ? 'Made product available' : 'Made product unavailable'}`, targetType:'product', targetId: id, targetName: product?.name })
     setProducts(prev => prev.map(p => p.id === id ? { ...p, available: !current } : p))
   }
 
@@ -35,7 +37,7 @@ export default function AdminProducts() {
   return (
     <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth:1100, margin:'0 auto', padding:'40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:1100, margin:'0 auto', padding:'40px 32px' }}>
         <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:32 }}>
           <div>
             <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:300 }}>Products</h1>

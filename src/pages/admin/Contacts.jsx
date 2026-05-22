@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import AdminNav from '@/components/AdminNav'
+import { logAction } from '@/lib/audit'
+import { useAdmin } from '@/context/AdminContext'
 
 const FLAGS = {
   important: { label:'Important', color:'#C4873A', icon:'★' },
@@ -21,6 +23,7 @@ export default function AdminContacts() {
   const [filter,    setFilter]    = useState('all')
   const [selected,  setSelected]  = useState(null)
   const [blocking,  setBlocking]  = useState(null)
+  const { user }               = useAdmin()
   const [blockNote, setBlockNote] = useState('')
 
   useEffect(() => { load() }, [])
@@ -43,19 +46,26 @@ export default function AdminContacts() {
   async function setFlag(id, flag) {
     const newFlag = flag
     await supabase.from('contact_enquiries').update({ flag: newFlag }).eq('id', id)
+    const msg = messages.find(m => m.id === id)
+    if (newFlag) await logAction({ userEmail: user?.email, action: `Flagged message as ${newFlag}`, targetType:'contact', targetId: id, targetName: msg?.name })
+    else await logAction({ userEmail: user?.email, action: 'Removed flag from message', targetType:'contact', targetId: id, targetName: msg?.name })
     setMessages(prev => prev.map(m => m.id === id ? { ...m, flag: newFlag } : m))
     if (selected?.id === id) setSelected(prev => ({ ...prev, flag: newFlag }))
   }
 
   async function markReplied(id) {
     await supabase.from('contact_enquiries').update({ replied: true }).eq('id', id)
+    const msg = messages.find(m => m.id === id)
+    await logAction({ userEmail: user?.email, action: 'Marked message as replied', targetType:'contact', targetId: id, targetName: msg?.name })
     setMessages(prev => prev.map(m => m.id === id ? { ...m, replied: true } : m))
     if (selected?.id === id) setSelected(prev => ({ ...prev, replied: true }))
   }
 
   async function deleteMessage(id) {
     if (!confirm('Delete this message?')) return
+    const msg = messages.find(m => m.id === id)
     await supabase.from('contact_enquiries').delete().eq('id', id)
+    await logAction({ userEmail: user?.email, action: 'Deleted contact message', targetType:'contact', targetId: id, targetName: msg?.name, details: { email: msg?.email, subject: msg?.subject } })
     setMessages(prev => prev.filter(m => m.id !== id))
     if (selected?.id === id) setSelected(null)
   }
@@ -72,6 +82,7 @@ export default function AdminContacts() {
     } else if (error) {
       alert('Failed to block: ' + error.message)
     } else {
+      await logAction({ userEmail: user?.email, action: 'Blocked email from contact message', targetType:'blocked_email', targetName: email, details: { reason: blockNote || null } })
       alert(`${email} has been blocked.`)
       setBlocking(null)
       setBlockNote('')
@@ -105,7 +116,7 @@ export default function AdminContacts() {
   return (
     <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth:1200, margin:'0 auto', padding:'40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:1200, margin:'0 auto', padding:'40px 32px' }}>
 
         <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:32 }}>
           <div>
@@ -133,7 +144,7 @@ export default function AdminContacts() {
           ))}
         </div>
 
-        <div style={{ display:'grid', gridTemplateColumns: selected ? '1fr 420px' : '1fr', gap:20 }}>
+        <div className="admin-contacts-grid" style={{ display:'grid', gridTemplateColumns: selected ? '1fr 420px' : '1fr', gap:20 }}>
 
           {/* Message list */}
           <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', overflow:'hidden' }}>
@@ -175,7 +186,7 @@ export default function AdminContacts() {
 
           {/* Message detail */}
           {selected && (
-            <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:28, height:'fit-content', position:'sticky', top:'calc(var(--nav-h) + 24px)' }}>
+            <div className="admin-contact-detail" style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:28, height:'fit-content', position:'sticky', top:'calc(var(--nav-h) + 24px)' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
                 <div>
                   <h3 style={{ fontFamily:'var(--font-display)', fontSize:'1.3rem', fontWeight:300, marginBottom:4 }}>{selected.name}</h3>

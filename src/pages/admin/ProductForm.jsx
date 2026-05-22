@@ -146,7 +146,7 @@ export default function AdminProductForm() {
   return (
     <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth:800, margin:'0 auto', padding:'40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:800, margin:'0 auto', padding:'40px 32px' }}>
         <div style={{ marginBottom:32 }}>
           <button onClick={() => navigate('/admin/products')} style={{ fontSize:'0.72rem', color:'var(--stone)', background:'none', border:'none', cursor:'pointer', marginBottom:12 }}>← Back to products</button>
           <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:300 }}>{isNew && !savedId ? 'Add product' : `Edit — ${form.name}`}</h1>
@@ -157,11 +157,11 @@ export default function AdminProductForm() {
         <form onSubmit={handleSave}>
           <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:28, marginBottom:20 }}>
             <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--stone)', marginBottom:20 }}>Basic info</p>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
+            <div className="admin-form-2col" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
               <div><label style={lbl}>Name</label><input style={inp} value={form.name} onChange={set('name')} required /></div>
               <div><label style={lbl}>Slug</label><input style={inp} value={form.slug} onChange={set('slug')} placeholder="e.g. lune-vase" required /></div>
             </div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:16, marginBottom:16 }}>
+            <div className="admin-form-4col" style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:16, marginBottom:16 }}>
               <div><label style={lbl}>Price (EGP)</label><input style={inp} type="number" min="0" value={form.price} onChange={set('price')} required /></div>
               <div>
                 <label style={lbl}>Category</label>
@@ -230,7 +230,7 @@ export default function AdminProductForm() {
             <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:28, marginBottom:20 }}>
               <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--stone)', marginBottom:20 }}>Product images</p>
               {images.length > 0 && (
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
+                <div className="admin-img-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
                   {images.map((img) => (
                     <div key={img.id} style={{ position:'relative', aspectRatio:'1', borderRadius:'var(--r)', overflow:'hidden', border:`2px solid ${img.position===0?'var(--bronze)':'rgba(45,43,52,0.1)'}` }}>
                       <img src={img.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />

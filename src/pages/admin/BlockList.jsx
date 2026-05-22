@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import AdminNav from '@/components/AdminNav'
+import { logAction } from '@/lib/audit'
+import { useAdmin } from '@/context/AdminContext'
 
 export default function AdminBlockList() {
   const [blocked,  setBlocked]  = useState([])
@@ -8,6 +10,7 @@ export default function AdminBlockList() {
   const [newEmail, setNewEmail]  = useState('')
   const [newReason,setNewReason] = useState('')
   const [adding,   setAdding]   = useState(false)
+  const { user }               = useAdmin()
   const [showForm, setShowForm]  = useState(false)
   const [error,    setError]    = useState(null)
 
@@ -36,6 +39,7 @@ export default function AdminBlockList() {
     setAdding(false)
     if (err?.code === '23505') { setError('This email is already blocked.'); return }
     if (err) { setError(err.message); return }
+    await logAction({ userEmail: user?.email, action: 'Blocked email address', targetType:'blocked_email', targetName: newEmail.toLowerCase().trim(), details: { reason: newReason || null } })
     setNewEmail('')
     setNewReason('')
     setShowForm(false)
@@ -45,6 +49,7 @@ export default function AdminBlockList() {
   async function unblock(id, email) {
     if (!confirm(`Unblock ${email}?`)) return
     await supabase.from('blocked_emails').delete().eq('id', id)
+    await logAction({ userEmail: user?.email, action: 'Unblocked email address', targetType:'blocked_email', targetName: email })
     setBlocked(prev => prev.filter(b => b.id !== id))
   }
 
@@ -54,7 +59,7 @@ export default function AdminBlockList() {
   return (
     <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth:900, margin:'0 auto', padding:'40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:900, margin:'0 auto', padding:'40px 32px' }}>
 
         <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:32 }}>
           <div>

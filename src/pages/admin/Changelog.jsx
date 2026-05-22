@@ -84,7 +84,7 @@ export default function AdminChangelog() {
   return (
     <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth:1000, margin:'0 auto', padding:'40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:1000, margin:'0 auto', padding:'40px 32px' }}>
 
         <div style={{ marginBottom:32 }}>
           <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:300 }}>Changelog</h1>

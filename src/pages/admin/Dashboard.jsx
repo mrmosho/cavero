@@ -61,7 +61,7 @@ export default function AdminDashboard() {
         {loading ? <p style={{ color: 'var(--stone)' }}>Loading...</p> : (
           <>
             {/* Stat cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 40 }}>
+            <div className="admin-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 40 }}>
               {[
                 { label: 'Total orders',       value: stats.totalOrders },
                 { label: 'Orders today',        value: stats.todayOrders },
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 24 }}>
+            <div className="admin-main-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 24 }}>
 
               {/* Recent orders */}
               <div style={{ background: '#fff', borderRadius: 'var(--r)', border: '1px solid rgba(45,43,52,0.08)', overflow: 'hidden' }}>
