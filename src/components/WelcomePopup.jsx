@@ -102,20 +102,26 @@ export default function WelcomePopup() {
         }}
       />
 
-      {/* Modal — properly centered */}
+      {/* Modal — centered using flex on overlay */}
       <div style={{
-        position:  'fixed',
-        top:       '50%',
-        left:      '50%',
-        transform: 'translate(-50%, -50%)',
-        width:     'calc(100% - 48px)',
-        maxWidth:  460,
-        background: 'var(--cream)',
-        borderRadius: 'var(--r)',
-        zIndex:    1201,
-        overflow:  'hidden',
-        boxShadow: '0 24px 80px rgba(29,28,34,0.25)',
-        animation: 'fadeSlideUp 0.4s var(--ease-out) both',
+        position:       'fixed',
+        inset:          0,
+        zIndex:         1201,
+        display:        'flex',
+        alignItems:     'center',
+        justifyContent: 'center',
+        padding:        '24px',
+        pointerEvents:  'none',
+      }}>
+      <div style={{
+        width:          '100%',
+        maxWidth:       460,
+        background:     'var(--cream)',
+        borderRadius:   'var(--r)',
+        overflow:       'hidden',
+        boxShadow:      '0 24px 80px rgba(29,28,34,0.25)',
+        pointerEvents:  'all',
+        animation:      'popupIn 0.35s var(--ease-out) both',
       }}>
         {/* Close */}
         <button
@@ -185,6 +191,7 @@ export default function WelcomePopup() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </>
   )
