@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useCart } from '@/context/CartContext'
 import { useProduct, useProducts } from '@/hooks/useProducts'
@@ -11,6 +11,7 @@ import Toast from '@/components/Toast'
 export default function Product() {
   const { slug } = useParams()
   const { addToCart } = useCart()
+  const navigate     = useNavigate()
   const { product, loading } = useProduct(slug)
   const { products: allProducts } = useProducts()
 
@@ -148,6 +149,13 @@ export default function Product() {
                 Add to cart
               </button>
             </div>
+            <button className="btn btn-full" style={{ marginBottom:12, background:'var(--charcoal)', color:'var(--cream)', border:'none', padding:'14px', borderRadius:'var(--r)', fontSize:'0.75rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', cursor:'pointer', fontFamily:'var(--font-body)' }}
+              onClick={async () => {
+                await addToCart(slug, qty, { variantName: colour?.name || null, personalisationNote: note || null })
+                navigate('/checkout')
+              }}>
+              Buy now
+            </button>
             <p className="product-info__notice">✦ Made to order · Ships in 5-7 days · Free Cairo delivery</p>
 
             {/* Accordion */}
