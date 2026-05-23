@@ -52,7 +52,7 @@ export default function AdminNav() {
 
         {/* Left — logo + links */}
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontFamily:'var(--font-display)', fontSize:'1.1rem', fontWeight:300, color:'var(--cream)', letterSpacing:'0.12em', marginRight:8 }}>Cavero</span>
+          <img src="/logo_reverse.png" alt="Cavero" style={{ height:22, width:'auto', marginRight:8, display:'block' }} />
           <span style={{ fontSize:'0.6rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--stone)', borderLeft:'1px solid rgba(232,228,216,0.15)', paddingLeft:12, marginRight:8 }}>Admin</span>
 
           {/* Primary links — desktop */}
@@ -111,7 +111,7 @@ export default function AdminNav() {
           <div onClick={() => setMenuOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:999 }} />
           <div style={{ position:'fixed', top:0, right:0, bottom:0, width:260, background:'var(--dark)', zIndex:1000, display:'flex', flexDirection:'column', animation:'menuIn 0.4s var(--ease-out) both' }}>
             <div style={{ padding:'18px 20px', borderBottom:'1px solid rgba(232,228,216,0.08)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <span style={{ fontFamily:'var(--font-display)', fontSize:'1.1rem', fontWeight:300, color:'var(--cream)', letterSpacing:'0.12em' }}>Cavero Admin</span>
+              <img src="/logo_reverse.png" alt="Cavero" style={{ height:20, width:'auto', display:'block' }} />
               <button onClick={() => setMenuOpen(false)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'1.3rem', color:'var(--stone)', lineHeight:1 }}>×</button>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:'8px 0' }}>

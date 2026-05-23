@@ -63,7 +63,13 @@ export default function Nav({ dark = false }) {
         }}
       >
         <div className="nav__inner">
-          <Link to="/" className="nav__logo" style={{ color: textColor }}>Cavero</Link>
+          <Link to="/" className="nav__logo" style={{ lineHeight: 0 }}>
+            <img
+              src={isHero ? '/logo_reverse.png' : '/logo_primary.png'}
+              alt="Cavero"
+              style={{ height: 28, width: 'auto', display: 'block', transition: 'opacity 0.3s' }}
+            />
+          </Link>
 
           <div className="nav__links">
             {NAV_LINKS.map(({ label, to }) => (

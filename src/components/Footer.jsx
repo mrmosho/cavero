@@ -5,7 +5,7 @@ export default function Footer() {
       <div className="container">
         <div className="footer__grid">
           <div>
-            <div className="footer__brand-name">Cavero</div>
+            <img src="/logo_reverse.png" alt="Cavero" style={{ height: 36, width: 'auto', marginBottom: 16 }} />
             <div className="footer__divider"/>
             <p className="footer__brand-desc">Studio-crafted home objects, made to order. Every piece is designed with intention and made after you place your order. Based in Cairo, Egypt.</p>
             <div style={{ marginTop:28, display:'flex', gap:20 }}>
