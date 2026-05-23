@@ -273,3 +273,13 @@
 .product-card:hover .product-card__quick-add {
   background: var(--charcoal) !important;
 }
+
+/* ── Admin nav mobile ── */
+@media (max-width: 900px) {
+  .admin-desktop-links { display: none !important; }
+  .admin-mobile-label  { display: block !important; }
+  .admin-hamburger     { display: flex !important; }
+  .admin-nav-email     { display: none !important; }
+  .admin-store-link    { display: none !important; }
+  .admin-signout-btn   { display: none !important; }
+}
