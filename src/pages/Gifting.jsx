@@ -21,6 +21,8 @@ export default function Gifting() {
 
   // All gifts category products — no limit
   const giftProducts    = products.filter(p => p.category === 'gifts')
+  console.log('all products:', products.map(p => p.category))
+console.log('gift products:', giftProducts.length)
   const specialProducts = products.filter(p => p.category === 'specials')
 
   const set = f => e => setForm(prev => ({ ...prev, [f]: e.target.value }))
