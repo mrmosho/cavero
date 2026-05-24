@@ -98,7 +98,7 @@ export default function Product() {
             </div>
             <div className="product-info__price-row">
               <span className="product-info__price">
-                {product.slug === 'duo-statue' ? 'From ' : ''}EGP {product.price.toLocaleString()}
+                {product.customisable ? 'From ' : ''}EGP {product.price.toLocaleString()}
               </span>
             </div>
 
@@ -124,16 +124,23 @@ export default function Product() {
               </div>
             )}
 
-            {/* Personalisation */}
+            {/* Personalisation — shown for any customisable product */}
             {product.customisable && (
-              <div className="product-info__custom" style={{ marginBottom:28 }}>
-                <p className="product-info__option-label">Personalisation note (optional)</p>
+              <div style={{ marginBottom:28, padding:'18px 20px', background:'rgba(168,149,111,0.06)', border:'1px solid rgba(168,149,111,0.2)', borderRadius:'var(--r)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                  <span style={{ fontSize:'0.85rem' }}>✦</span>
+                  <p className="product-info__option-label" style={{ margin:0 }}>Personalisation</p>
+                </div>
                 <textarea
                   className="product-info__textarea"
-                  placeholder="Any custom details, names, or requests..."
+                  placeholder="Add names, dates, a message, or any custom details you'd like included..."
                   value={note}
                   onChange={e => setNote(e.target.value)}
+                  style={{ borderColor: note ? 'var(--bronze)' : undefined, minHeight: 90 }}
                 />
+                <p style={{ fontSize:'0.72rem', color:'var(--stone)', marginTop:6, lineHeight:1.6 }}>
+                  Your personalisation note will be reviewed by our team before production begins.
+                </p>
               </div>
             )}
 

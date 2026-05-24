@@ -30,8 +30,13 @@ export default function ProductCard({ product, delayClass = '' }) {
           Add to cart
         </button>
         {product.badge && (
-          <span className={`badge badge-${product.badge}`} style={{ position:'absolute', top:12, left:12 }}>
-            {product.badge}
+          <span style={{ position:'absolute', top:12, left:12, display:'inline-block', padding:'3px 10px', borderRadius:100, fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', background: product.badge === 'new' ? 'var(--charcoal)' : 'var(--bronze)', color:'#fff' }}>
+            {product.badge === 'new' ? 'New' : product.badge}
+          </span>
+        )}
+        {product.customisable && !product.badge && (
+          <span style={{ position:'absolute', top:12, left:12, display:'inline-block', padding:'3px 10px', borderRadius:100, fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--bronze)', color:'#fff' }}>
+            Custom
           </span>
         )}
       </div>
