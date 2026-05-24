@@ -17,12 +17,10 @@ export default function Gifting() {
   const [sent, setSent] = useState(false)
   const formRef    = useRef(null)
   const messageRef = useRef(null)
-  useScrollReveal()
+  useScrollReveal([products.length])
 
   // All gifts category products — no limit
   const giftProducts    = products.filter(p => p.category === 'gifts')
-  console.log('all products:', products.map(p => p.category))
-console.log('gift products:', giftProducts.length)
   const specialProducts = products.filter(p => p.category === 'specials')
 
   const set = f => e => setForm(prev => ({ ...prev, [f]: e.target.value }))
