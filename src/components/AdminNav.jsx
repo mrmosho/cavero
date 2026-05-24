@@ -9,6 +9,7 @@ const PRIMARY = [
   { to: '/admin/products',       label: 'Products',   icon: '◇' },
   { to: '/admin/finance',        label: 'Finance',    icon: '₤' },
   { to: '/admin/contacts',       label: 'Messages',   icon: '✉' },
+  { to: '/admin/reviews',         label: 'Reviews',    icon: '★' },
 ]
 
 // Secondary links — in "More" dropdown on desktop, same drawer on mobile
