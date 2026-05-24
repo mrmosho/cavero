@@ -11,7 +11,7 @@ export default function Footer() {
             <div style={{ marginTop:28, display:'flex', gap:20 }}>
               <a href="https://www.instagram.com/caveroegy?igsh=cTU5M2ZscW1pcng2" target="_blank" rel="noreferrer" className="footer__social-link">Instagram</a>
               <a href="https://www.tiktok.com/@caveroegy" target="_blank" rel="noreferrer" className="footer__social-link">TikTok</a>
-              <a href="https://www.facebook.com/profile.php?id=61589152890006" target="_blank" rel="noreferrer" className="footer__social-link">Facebook</a>
+              <a href="https://www.facebook.com/profile.php?id=61590408539299" target="_blank" rel="noreferrer" className="footer__social-link">Facebook</a>
               <a href="https://wa.me/201055115993" target="_blank" rel="noreferrer" className="footer__social-link">WhatsApp</a>
             </div>
           </div>
