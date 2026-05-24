@@ -21,7 +21,7 @@ export default function Footer() {
             <Link to="/shop?cat=vases" className="footer__link">Vases & Planters</Link>
             <Link to="/shop?cat=desk" className="footer__link">Desk Objects</Link>
             <Link to="/gifting" className="footer__link">Gift Collections</Link>
-            <Link to="/contact" className="footer__link">Custom Orders</Link>
+            <Link to="/contact?subject=custom" className="footer__link">Custom Orders</Link>
           </div>
           <div>
             <div className="footer__col-title">Information</div>
@@ -35,7 +35,7 @@ export default function Footer() {
             <a href="mailto:caveroegy@gmail.com" className="footer__link">caveroegy@gmail.com</a>
             <a href="https://wa.me/201055115993" target="_blank" rel="noreferrer" className="footer__link">WhatsApp</a>
             <p className="footer__link" style={{ cursor:'default' }}>Sun – Thu · 10am – 8pm</p>
-            <div style={{ marginTop:24 }}><Link to="/contact" className="btn btn-outline-cream btn-sm">Custom order</Link></div>
+            <div style={{ marginTop:24 }}><Link to="/contact?subject=custom" className="btn btn-outline-cream btn-sm">Custom order</Link></div>
           </div>
         </div>
         <div className="footer__bottom">

@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
@@ -7,7 +8,18 @@ import Toast from '@/components/Toast'
 
 export default function Contact() {
   const { showToast } = useCart()
-  const [form, setForm] = useState({ name:'', phone:'', email:'', subject:'general', message:'' })
+  const [searchParams] = useSearchParams()
+  const [form, setForm] = useState({ name:'', phone:'', email:'', subject: searchParams.get('subject') || 'general', message:'' })
+
+  // If URL has ?subject=custom, scroll to form and focus message
+  useEffect(() => {
+    if (searchParams.get('subject') === 'custom') {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior:'smooth', block:'start' })
+        setTimeout(() => messageRef.current?.focus(), 500)
+      }, 300)
+    }
+  }, [])
   const [loading, setLoading] = useState(false)
   const formRef    = useRef(null)
   const messageRef = useRef(null)

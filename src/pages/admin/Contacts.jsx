@@ -23,6 +23,7 @@ export default function AdminContacts() {
   const [filter,    setFilter]    = useState('all')
   const [selected,  setSelected]  = useState(null)
   const [blocking,  setBlocking]  = useState(null)
+  const [subjectFilter, setSubjectFilter] = useState('all')
   const { user }               = useAdmin()
   const [blockNote, setBlockNote] = useState('')
 
@@ -90,6 +91,8 @@ export default function AdminContacts() {
   }
 
   const filtered = messages.filter(m => {
+    const matchSubject = subjectFilter === 'all' || m.subject === subjectFilter
+    if (!matchSubject) return false
     if (filter === 'unread')    return !m.read
     if (filter === 'flagged')   return !!m.flag
     if (filter === 'follow_up') return m.flag === 'follow_up'
@@ -128,7 +131,7 @@ export default function AdminContacts() {
         </div>
 
         {/* Filters */}
-        <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+        <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
           {[
             { key:'all',       label:'All' },
             { key:'unread',    label:`Unread (${unreadCount})` },
@@ -139,6 +142,23 @@ export default function AdminContacts() {
           ].map(f => (
             <button key={f.key} onClick={() => setFilter(f.key)}
               style={{ padding:'7px 16px', borderRadius:100, fontSize:'0.7rem', cursor:'pointer', border:'1px solid', fontFamily:'var(--font-body)', borderColor:filter===f.key?'var(--charcoal)':'rgba(45,43,52,0.2)', background:filter===f.key?'var(--charcoal)':'transparent', color:filter===f.key?'var(--cream)':'var(--charcoal)' }}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Subject filters */}
+        <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap', alignItems:'center' }}>
+          <span style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)', marginRight:4 }}>Subject:</span>
+          {[
+            { key:'all',       label:'All subjects' },
+            { key:'custom',    label:'✦ Custom orders' },
+            { key:'general',   label:'General' },
+            { key:'order',     label:'Existing order' },
+            { key:'wholesale', label:'Wholesale' },
+          ].map(f => (
+            <button key={f.key} onClick={() => setSubjectFilter(f.key)}
+              style={{ padding:'5px 14px', borderRadius:100, fontSize:'0.7rem', cursor:'pointer', border:'1px solid', fontFamily:'var(--font-body)', borderColor:subjectFilter===f.key?'var(--bronze)':'rgba(45,43,52,0.15)', background:subjectFilter===f.key?'rgba(168,149,111,0.12)':'transparent', color:subjectFilter===f.key?'var(--bronze)':'var(--stone)' }}>
               {f.label}
             </button>
           ))}

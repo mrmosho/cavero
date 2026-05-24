@@ -15,15 +15,17 @@ export function StatusBadge({ status }) {
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null)
-  const [recentOrders, setRecentOrders] = useState([])
+  const [recentOrders,  setRecentOrders]  = useState([])
+  const [customOrders,  setCustomOrders]   = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
     async function load() {
-      const [ordersRes, recentRes] = await Promise.all([
+      const [ordersRes, recentRes, customRes] = await Promise.all([
         supabase.from('orders').select('status, total, created_at'),
         supabase.from('orders').select('id, guest_name, guest_email, total, status, created_at, order_items(product_name, qty)').order('created_at', { ascending: false }).limit(10),
+        supabase.from('contact_enquiries').select('id, name, phone, email, message, created_at, read, replied').eq('subject', 'custom').eq('read', false).order('created_at', { ascending: false }).limit(5),
       ])
       const orders = ordersRes.data || []
       const now   = new Date()
@@ -41,6 +43,7 @@ export default function AdminDashboard() {
         byStatus:      Object.keys(ORDER_STATUS).reduce((acc, k) => { acc[k] = orders.filter(o => o.status === k).length; return acc }, {}),
       })
       setRecentOrders(recentRes.data || [])
+      setCustomOrders(customRes.data || [])
       setLoading(false)
     }
     load()
@@ -127,6 +130,36 @@ export default function AdminDashboard() {
               </div>
 
             </div>
+          {/* Custom order requests */}
+            {customOrders.length > 0 && (
+              <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(168,149,111,0.3)', overflow:'hidden', marginTop:24, gridColumn:'1 / -1' }}>
+                <div style={{ padding:'16px 24px', borderBottom:'1px solid rgba(45,43,52,0.08)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'rgba(168,149,111,0.06)' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <span style={{ fontSize:'1rem' }}>✦</span>
+                    <h2 style={{ fontSize:'0.78rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--charcoal)' }}>Unread Custom Order Requests</h2>
+                    <span style={{ background:'var(--bronze)', color:'#fff', fontSize:'0.65rem', fontWeight:500, padding:'2px 8px', borderRadius:100 }}>{customOrders.length}</span>
+                  </div>
+                  <button onClick={() => navigate('/admin/contacts?subject=custom')} style={{ fontSize:'0.72rem', color:'var(--bronze)', background:'none', border:'none', borderBottom:'1px solid var(--bronze)', cursor:'pointer', paddingBottom:1 }}>View all →</button>
+                </div>
+                <div>
+                  {customOrders.map(m => (
+                    <div key={m.id} style={{ padding:'16px 24px', borderBottom:'1px solid rgba(45,43,52,0.05)', display:'grid', gridTemplateColumns:'1fr auto', gap:16, alignItems:'start', cursor:'pointer' }}
+                      onClick={() => navigate('/admin/contacts')}>
+                      <div>
+                        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                          <span style={{ fontSize:'0.88rem', fontWeight:600 }}>{m.name}</span>
+                          <span style={{ fontSize:'0.72rem', color:'var(--stone)' }}>{m.phone || m.email || ''}</span>
+                        </div>
+                        <p style={{ fontSize:'0.8rem', color:'var(--stone)', lineHeight:1.5, margin:0 }}>{m.message?.slice(0, 120)}{m.message?.length > 120 ? '...' : ''}</p>
+                      </div>
+                      <span style={{ fontSize:'0.72rem', color:'var(--stone)', whiteSpace:'nowrap' }}>
+                        {new Date(m.created_at).toLocaleDateString('en-EG', { day:'numeric', month:'short' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
