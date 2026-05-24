@@ -17,7 +17,7 @@ export default function CartDrawer() {
         <div className="cart-drawer__items">
           {cart.length === 0 ? (
             <div className="cart-drawer__empty">
-              <div style={{ fontSize:'2.5rem', marginBottom:16, opacity:0.3 }}>\u25c7</div>
+              <div style={{ fontSize:'2.5rem', marginBottom:16, opacity:0.3 }}>◇</div>
               <p style={{ fontFamily:'var(--font-display)', fontSize:'1.1rem', fontWeight:300, marginBottom:8 }}>Your cart is empty</p>
               <p style={{ fontSize:'.8rem' }}>Browse the collection to find your piece.</p>
             </div>
