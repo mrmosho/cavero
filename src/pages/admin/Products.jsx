@@ -76,8 +76,8 @@ export default function AdminProducts() {
             <div style={{ position:'relative' }}>
               <button
                 onClick={() => setExportMenu(m => !m)}
-                style={{ padding:'10px 20px', borderRadius:'var(--r)', fontSize:'0.72rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', border:'1px solid rgba(45,43,52,0.2)', background:'transparent', color:'var(--charcoal)', fontFamily:'var(--font-body)', display:'flex', alignItems:'center', gap:6 }}>
-                ↓ Export
+                style={{ padding:'10px 20px', borderRadius:'var(--r)', fontSize:'0.72rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', border:'none', background:'var(--charcoal)', color:'var(--cream)', fontFamily:'var(--font-body)', display:'flex', alignItems:'center', gap:6 }}>
+                ↓ Export to Excel
                 <span style={{ fontSize:'0.6rem', opacity:0.6, transform:exportMenu?'rotate(180deg)':'none', transition:'transform .2s', display:'inline-block' }}>▼</span>
               </button>
               {exportMenu && (
