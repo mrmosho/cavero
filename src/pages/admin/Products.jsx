@@ -102,7 +102,7 @@ export default function AdminProducts() {
         const weight     = String(row['Weight (g)'] || '').trim()
         const details    = [material && `Material: ${material}`, weight && `Weight: ${weight}`].filter(Boolean).join('. ')
 
-        parsed.push({ name, slug, price, category, label: String(row['Category']||'').trim()||category, customisable, details, colors, colorHexMap, available:true, sort_order:0, badge:null, description:'' })
+        parsed.push({ name, slug, price, category, label: String(row['Category']||'').trim()||category, customisable, details, colors, colorHexMap, available:false, sort_order:0, badge:null, description:'' })
       }
 
       if (!parsed.length) { setImportError('No valid products found. Make sure the "Product Name" column has data.'); return }
