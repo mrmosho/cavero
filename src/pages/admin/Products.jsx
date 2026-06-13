@@ -119,8 +119,10 @@ export default function AdminProducts() {
     let added = 0, skipped = 0
 
     for (const row of importPreview) {
-      const { data: existing } = await supabase.from('products').select('id').eq('slug', row.slug).maybeSingle()
-      if (existing) { skipped++; continue }
+      // Skip if slug OR name already exists
+      const { data: existingSlug } = await supabase.from('products').select('id').eq('slug', row.slug).maybeSingle()
+      const { data: existingName } = await supabase.from('products').select('id').ilike('name', row.name).maybeSingle()
+      if (existingSlug || existingName) { skipped++; continue }
 
       const { data: newProduct, error } = await supabase.from('products')
         .insert({ slug:row.slug, name:row.name, price:row.price, category:row.category, label:row.label, description:row.description, details:row.details, badge:row.badge, available:row.available, customisable:row.customisable, sort_order:row.sort_order })
