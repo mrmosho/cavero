@@ -60,8 +60,8 @@ export default function CustomOrderForm({ onSuccess, dark = false }) {
 
     const { data: order, error: orderErr } = await supabase.from('orders').insert({
       guest_name:          form.name,
-      guest_email:         form.email || null,
-      guest_phone:         form.phone,
+      guest_email:         form.email?.trim() || null,
+      guest_phone:         form.phone?.trim() || null,
       status:              'pending_payment',
       order_type:          'custom',
       custom_description:  form.description,
