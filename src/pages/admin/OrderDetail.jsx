@@ -91,10 +91,14 @@ export default function AdminOrderDetail() {
                   {order.custom_description || 'No description provided.'}
                 </p>
                 {order.stl_file_url && (
-                  <a href={order.stl_file_url} target="_blank" rel="noreferrer"
-                    style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'10px 18px', background:'var(--charcoal)', color:'var(--cream)', borderRadius:'var(--r)', fontSize:'0.75rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', textDecoration:'none' }}>
-                    ↓ Download STL / 3D File
-                  </a>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginTop:8 }}>
+                    {order.stl_file_url.split(',').map((url, i) => (
+                      <a key={i} href={url.trim()} target="_blank" rel="noreferrer"
+                        style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'10px 18px', background:'var(--charcoal)', color:'var(--cream)', borderRadius:'var(--r)', fontSize:'0.75rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', textDecoration:'none' }}>
+                        ↓ File {order.stl_file_url.split(',').length > 1 ? i+1 : ''} — 3D File
+                      </a>
+                    ))}
+                  </div>
                 )}
               </Section>
             )}

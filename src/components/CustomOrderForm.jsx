@@ -8,7 +8,7 @@ export default function CustomOrderForm({ onSuccess, dark = false }) {
   const navigate   = useNavigate()
   const fileRef    = useRef(null)
   const [form, setForm] = useState({ name:'', phone:'', email:'', description:'', line1:'', city:'', governorate:'Cairo' })
-  const [file,     setFile]     = useState(null)
+  const [files,    setFiles]    = useState([])
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState(null)
 
@@ -41,14 +41,18 @@ export default function CustomOrderForm({ onSuccess, dark = false }) {
 
     let stlUrl = null
 
-    // Upload STL file if provided
-    if (file) {
-      const ext      = file.name.split('.').pop().toLowerCase()
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { error: uploadErr } = await supabase.storage.from('stl-files').upload(filename, file)
-      if (uploadErr) { setError('File upload failed: ' + uploadErr.message); setLoading(false); return }
-      const { data: { publicUrl } } = supabase.storage.from('stl-files').getPublicUrl(filename)
-      stlUrl = publicUrl
+    // Upload all files, store URLs as comma-separated string
+    if (files.length > 0) {
+      const urls = []
+      for (const file of files) {
+        const ext      = file.name.split('.').pop().toLowerCase()
+        const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { error: uploadErr } = await supabase.storage.from('stl-files').upload(filename, file)
+        if (uploadErr) { setError('File upload failed: ' + uploadErr.message); setLoading(false); return }
+        const { data: { publicUrl } } = supabase.storage.from('stl-files').getPublicUrl(filename)
+        urls.push(publicUrl)
+      }
+      stlUrl = urls.join(',')
     }
 
     // Create order
@@ -131,11 +135,16 @@ export default function CustomOrderForm({ onSuccess, dark = false }) {
           style={{ border:`2px dashed ${dark ? 'rgba(232,228,216,0.2)' : 'rgba(45,43,52,0.2)'}`, borderRadius:'var(--r)', padding:'20px', textAlign:'center', cursor:'pointer', transition:'border-color .2s', background: dark ? 'rgba(232,228,216,0.04)' : '#FAFAF8' }}
           onMouseEnter={e => e.currentTarget.style.borderColor='var(--bronze)'}
           onMouseLeave={e => e.currentTarget.style.borderColor= dark ? 'rgba(232,228,216,0.2)' : 'rgba(45,43,52,0.2)'}>
-          <input ref={fileRef} type="file" accept=".stl,.obj,.step,.stp,.3mf" onChange={e => setFile(e.target.files?.[0]||null)} style={{ display:'none' }} />
-          {file ? (
+          <input ref={fileRef} type="file" accept=".stl,.obj,.step,.stp,.3mf" multiple onChange={e => setFiles(Array.from(e.target.files))} style={{ display:'none' }} />
+          {files.length > 0 ? (
             <div>
-              <p style={{ fontSize:'0.85rem', color:'var(--bronze)', marginBottom:4 }}>✓ {file.name}</p>
-              <p style={{ fontSize:'0.72rem', color: dark ? 'var(--stone)' : 'var(--stone)' }}>{(file.size/1024/1024).toFixed(1)} MB</p>
+              {files.map((f, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+                  <p style={{ fontSize:'0.82rem', color:'var(--bronze)', margin:0 }}>✓ {f.name}</p>
+                  <p style={{ fontSize:'0.72rem', color: dark ? 'var(--stone)' : 'var(--stone)', margin:0, marginLeft:8 }}>{(f.size/1024/1024).toFixed(1)} MB</p>
+                </div>
+              ))}
+              <p style={{ fontSize:'0.7rem', color: dark ? 'rgba(232,228,216,0.4)' : 'var(--stone)', marginTop:6 }}>{files.length} file{files.length!==1?'s':''} selected · Click to add more</p>
             </div>
           ) : (
             <div>
@@ -144,10 +153,10 @@ export default function CustomOrderForm({ onSuccess, dark = false }) {
             </div>
           )}
         </div>
-        {file && (
-          <button type="button" onClick={() => setFile(null)}
+        {files.length > 0 && (
+          <button type="button" onClick={() => setFiles([])}
             style={{ fontSize:'0.72rem', color: dark ? 'var(--stone)' : 'var(--stone)', background:'none', border:'none', cursor:'pointer', marginTop:6, textDecoration:'underline', fontFamily:'var(--font-body)' }}>
-            Remove file
+            Remove all files
           </button>
         )}
       </div>
