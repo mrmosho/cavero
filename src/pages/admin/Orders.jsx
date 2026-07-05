@@ -1,203 +1,174 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { ORDER_STATUS } from '@/lib/constants'
 import AdminNav from '@/components/AdminNav'
-import { StatusBadge } from './Dashboard'
 
-// ── Excel / CSV export ────────────────────────────────────
-function exportToCSV(orders) {
-  const headers = ['Order ID', 'Date', 'Customer Name', 'Email', 'Phone', 'Governorate', 'City', 'Address', 'Items', 'Subtotal (EGP)', 'Shipping (EGP)', 'Total (EGP)', 'Status', 'Payment', 'Notes']
-
-  const rows = orders.map(o => {
-    const addr = o.shipping_address || {}
-    const items = (o.order_items || []).map(i => `${i.product_name} x${i.qty}${i.variant_name ? ` (${i.variant_name})` : ''}${i.personalisation_note ? ` [Note: ${i.personalisation_note}]` : ''}`).join(' | ')
-    return [
-      o.id.split('-')[0].toUpperCase(),
-      new Date(o.created_at).toLocaleDateString('en-EG'),
-      o.guest_name || '',
-      o.guest_email || '',
-      o.guest_phone || '',
-      addr.governorate || '',
-      addr.city || '',
-      `${addr.line1 || ''}${addr.line2 ? ', ' + addr.line2 : ''}`,
-      items,
-      o.subtotal || 0,
-      o.shipping || 0,
-      o.total || 0,
-      ORDER_STATUS[o.status]?.label || o.status,
-      o.payment_method || 'cod',
-      o.notes || '',
-    ]
-  })
-
-  const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-    .join('\n')
-
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `cavero-orders-${new Date().toISOString().split('T')[0]}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+const STATUS_COLORS = {
+  pending_payment: '#A8956F',
+  in_production:   '#C4873A',
+  ready_to_ship:   '#2D2B34',
+  shipped:         '#2D2B34',
+  completed:       '#6B8F5E',
+  cancelled:       '#8B1A1A',
 }
 
 export default function AdminOrders() {
-  const [orders, setOrders] = useState([])
-  const [filter, setFilter] = useState('all')
-  const [search, setSearch] = useState('')
+  const [orders,  setOrders]  = useState([])
   const [loading, setLoading] = useState(true)
-  const [exporting, setExporting] = useState(false)
+  const [search,  setSearch]  = useState('')
+  const [status,  setStatus]  = useState('all')
+  const [type,    setType]    = useState('all') // all | standard | custom
   const navigate = useNavigate()
 
-  const load = useCallback(async () => {
+  useEffect(() => { load() }, [])
+
+  async function load() {
     setLoading(true)
-    let query = supabase
+    const { data } = await supabase
       .from('orders')
-      .select('id, guest_name, guest_email, guest_phone, total, subtotal, shipping, status, created_at, payment_method, notes, shipping_address, order_items(product_name, qty, variant_name, personalisation_note)')
+      .select('id, guest_name, guest_email, guest_phone, status, total, created_at, order_type, custom_description, stl_file_url, order_items(product_name, qty)')
       .order('created_at', { ascending: false })
-    if (filter !== 'all') query = query.eq('status', filter)
-    const { data } = await query
     setOrders(data || [])
     setLoading(false)
-  }, [filter])
-
-  useEffect(() => { load() }, [load])
-
-  const filtered = search.trim()
-    ? orders.filter(o =>
-        o.guest_name?.toLowerCase().includes(search.toLowerCase()) ||
-        o.guest_email?.toLowerCase().includes(search.toLowerCase()) ||
-        o.guest_phone?.includes(search) ||
-        o.id.includes(search.toLowerCase())
-      )
-    : orders
-
-  async function handleExport() {
-    setExporting(true)
-    // Fetch full data for export including all fields
-    let query = supabase
-      .from('orders')
-      .select('*, order_items(*)')
-      .order('created_at', { ascending: false })
-    if (filter !== 'all') query = query.eq('status', filter)
-    const { data } = await query
-    exportToCSV(data || [])
-    setExporting(false)
   }
 
-  const totalRevenue = filtered.reduce((s, o) => s + (o.total || 0), 0)
+  const filtered = orders.filter(o => {
+    const matchSearch = !search.trim() ||
+      o.guest_name?.toLowerCase().includes(search.toLowerCase()) ||
+      o.guest_email?.toLowerCase().includes(search.toLowerCase()) ||
+      o.id?.toLowerCase().includes(search.toLowerCase())
+    const matchStatus = status === 'all' || o.status === status
+    const matchType   = type   === 'all' || (type === 'custom' ? o.order_type === 'custom' : o.order_type !== 'custom')
+    return matchSearch && matchStatus && matchType
+  })
+
+  const customCount = orders.filter(o => o.order_type === 'custom').length
+
+  function exportToExcel() {
+    const headers = ['Ref','Name','Email','Phone','Items','Total','Status','Type','Date','Custom Description','STL File']
+    const rows = filtered.map(o => [
+      '#' + o.id.slice(0,8).toUpperCase(),
+      o.guest_name, o.guest_email || '', o.guest_phone || '',
+      o.order_type === 'custom' ? 'Custom order' : (o.order_items||[]).map(i => `${i.product_name} x${i.qty}`).join(', '),
+      o.total, o.status, o.order_type || 'standard',
+      new Date(o.created_at).toLocaleDateString('en-EG'),
+      o.custom_description || '',
+      o.stl_file_url || '',
+    ])
+    const csv = [headers,...rows].map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n')
+    const blob = new Blob(['\uFEFF'+csv], { type:'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url; a.download = `cavero-orders-${new Date().toISOString().split('T')[0]}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F8F6F0' }}>
+    <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:1200, margin:'0 auto', padding:'40px 32px' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
+        <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:32 }}>
           <div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 300 }}>Orders</h1>
-            <p style={{ color: 'var(--stone)', fontSize: '0.85rem', marginTop: 4 }}>
-              {filtered.length} orders · EGP {totalRevenue.toLocaleString()} total
+            <h1 style={{ fontFamily:'var(--font-display)', fontSize:'2rem', fontWeight:300 }}>Orders</h1>
+            <p style={{ color:'var(--stone)', fontSize:'0.85rem', marginTop:4 }}>
+              {orders.length} total · {customCount} custom
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              onClick={load}
-              style={{ padding: '10px 20px', borderRadius: 'var(--r)', fontSize: '0.72rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', border: '1px solid rgba(45,43,52,0.2)', background: 'transparent', color: 'var(--charcoal)', fontFamily: 'var(--font-body)' }}>
-              ↻ Refresh
-            </button>
-            <button
-              onClick={handleExport}
-              disabled={exporting || filtered.length === 0}
-              style={{ padding: '10px 20px', borderRadius: 'var(--r)', fontSize: '0.72rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', border: 'none', background: 'var(--charcoal)', color: 'var(--cream)', fontFamily: 'var(--font-body)', opacity: exporting ? 0.6 : 1 }}>
-              {exporting ? 'Exporting...' : '↓ Export to Excel'}
-            </button>
+          <div style={{ display:'flex', gap:10 }}>
+            <button onClick={load} style={{ padding:'10px 16px', border:'1px solid rgba(45,43,52,0.2)', borderRadius:'var(--r)', fontSize:'0.7rem', cursor:'pointer', background:'transparent', fontFamily:'var(--font-body)', letterSpacing:'0.08em', textTransform:'uppercase' }}>↻ Refresh</button>
+            <button onClick={exportToExcel} style={{ padding:'10px 20px', borderRadius:'var(--r)', fontSize:'0.72rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', border:'none', background:'var(--charcoal)', color:'var(--cream)', fontFamily:'var(--font-body)' }}>↓ Export to Excel</button>
           </div>
         </div>
 
-        {/* Search */}
-        <div style={{ marginBottom: 20 }}>
+        {/* Filters */}
+        <div style={{ display:'flex', gap:12, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
           <input
             type="text"
-            placeholder="Search by name, email, phone, or order ID..."
+            placeholder="Search name, email, order ID..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ width: '100%', maxWidth: 420, padding: '10px 16px', border: '1px solid rgba(45,43,52,0.15)', borderRadius: 'var(--r)', fontSize: '0.88rem', outline: 'none', fontFamily: 'var(--font-body)', color: 'var(--charcoal)', background: '#fff' }}
+            style={{ padding:'9px 14px', border:'1px solid rgba(45,43,52,0.15)', borderRadius:'var(--r)', fontSize:'0.85rem', fontFamily:'var(--font-body)', outline:'none', width:260 }}
           />
+
+          {/* Type filter */}
+          <div style={{ display:'flex', gap:6 }}>
+            {[
+              { key:'all',      label:'All orders' },
+              { key:'standard', label:'Standard' },
+              { key:'custom',   label:`✦ Custom (${customCount})` },
+            ].map(f => (
+              <button key={f.key} onClick={() => setType(f.key)}
+                style={{ padding:'7px 14px', borderRadius:100, fontSize:'0.7rem', cursor:'pointer', border:'1px solid', fontFamily:'var(--font-body)', borderColor:type===f.key?'var(--bronze)':'rgba(45,43,52,0.2)', background:type===f.key?'rgba(168,149,111,0.1)':'transparent', color:type===f.key?'var(--bronze)':'var(--charcoal)' }}>
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Status filters */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-          {[{ key: 'all', label: 'All' }, ...Object.entries(ORDER_STATUS).map(([k, v]) => ({ key: k, label: v.label }))].map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key)}
-              style={{ padding: '7px 16px', borderRadius: 100, fontSize: '0.7rem', cursor: 'pointer', border: '1px solid', fontFamily: 'var(--font-body)', transition: 'all .15s', borderColor: filter === f.key ? 'var(--charcoal)' : 'rgba(45,43,52,0.2)', background: filter === f.key ? 'var(--charcoal)' : 'transparent', color: filter === f.key ? 'var(--cream)' : 'var(--charcoal)' }}>
-              {f.label}
+        {/* Status filter */}
+        <div style={{ display:'flex', gap:6, marginBottom:24, flexWrap:'wrap' }}>
+          {['all','pending_payment','in_production','ready_to_ship','shipped','completed','cancelled'].map(s => (
+            <button key={s} onClick={() => setStatus(s)}
+              style={{ padding:'5px 12px', borderRadius:100, fontSize:'0.68rem', cursor:'pointer', border:'1px solid', fontFamily:'var(--font-body)', borderColor:status===s?'var(--charcoal)':'rgba(45,43,52,0.15)', background:status===s?'var(--charcoal)':'transparent', color:status===s?'var(--cream)':'var(--stone)', textTransform:'capitalize' }}>
+              {s === 'all' ? 'All statuses' : s.replace(/_/g,' ')}
             </button>
           ))}
         </div>
 
-        {/* Table */}
-        <div style={{ background: '#fff', borderRadius: 'var(--r)', border: '1px solid rgba(45,43,52,0.08)', overflow: 'hidden' }}>
-          {loading ? (
-            <p style={{ padding: 32, color: 'var(--stone)' }}>Loading...</p>
-          ) : filtered.length === 0 ? (
-            <p style={{ padding: 32, color: 'var(--stone)', textAlign: 'center' }}>No orders found.</p>
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        {/* Orders table */}
+        {loading ? <p style={{ color:'var(--stone)' }}>Loading...</p> : (
+          <div className="admin-table-wrap" style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', overflow:'hidden' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(45,43,52,0.08)', background: '#FAFAF8' }}>
-                  {['Ref', 'Customer', 'Items', 'Date', 'Total', 'Status', ''].map(h => (
-                    <th key={h} style={{ padding: '12px 20px', textAlign: 'left', fontSize: '0.65rem', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--stone)' }}>{h}</th>
+                <tr style={{ borderBottom:'1px solid rgba(45,43,52,0.08)', background:'#FAFAF8' }}>
+                  {['Ref','Customer','Items','Date','Total','Status',''].map(h => (
+                    <th key={h} style={{ padding:'12px 20px', textAlign:'left', fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map(o => (
-                  <tr key={o.id} style={{ borderBottom: '1px solid rgba(45,43,52,0.05)', cursor: 'pointer', transition: 'background .15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#FAFAF8'}
-                    onMouseLeave={e => e.currentTarget.style.background = ''}
-                    onClick={() => navigate(`/admin/orders/${o.id}`)}>
-                    <td style={{ padding: '14px 20px', fontSize: '0.75rem', fontFamily: 'monospace', color: 'var(--stone)' }}>
-                      #{o.id.split('-')[0].toUpperCase()}
+                  <tr key={o.id} style={{ borderBottom:'1px solid rgba(45,43,52,0.05)', cursor:'pointer' }} onClick={() => navigate(`/admin/orders/${o.id}`)}>
+                    <td style={{ padding:'14px 20px', fontSize:'0.78rem', fontFamily:'monospace', color:'var(--stone)' }}>
+                      #{o.id.slice(0,8).toUpperCase()}
                     </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 500 }}>{o.guest_name}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--stone)' }}>{o.guest_email}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--stone)' }}>{o.guest_phone}</div>
+                    <td style={{ padding:'14px 20px' }}>
+                      <div style={{ fontSize:'0.88rem', fontWeight:500 }}>{o.guest_name}</div>
+                      <div style={{ fontSize:'0.72rem', color:'var(--stone)' }}>{o.guest_email || o.guest_phone}</div>
                     </td>
-                    <td style={{ padding: '14px 20px', maxWidth: 220 }}>
-                      {(o.order_items || []).map((item, i) => (
-                        <div key={i} style={{ fontSize: '0.78rem', color: 'var(--charcoal)', lineHeight: 1.5 }}>
-                          {item.product_name} <span style={{ color: 'var(--stone)' }}>×{item.qty}</span>
-                          {item.personalisation_note && <span style={{ color: 'var(--bronze)', display: 'block', fontSize: '0.7rem' }}>✎ {item.personalisation_note}</span>}
+                    <td style={{ padding:'14px 20px', fontSize:'0.82rem', color:'var(--charcoal)', maxWidth:220 }}>
+                      {o.order_type === 'custom' ? (
+                        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                          <span style={{ background:'rgba(168,149,111,0.15)', color:'var(--bronze)', fontSize:'0.65rem', fontWeight:500, padding:'2px 8px', borderRadius:100, whiteSpace:'nowrap' }}>✦ Custom</span>
+                          {o.stl_file_url && <span style={{ fontSize:'0.65rem', color:'var(--stone)' }}>+ STL</span>}
+                          <span style={{ fontSize:'0.78rem', color:'var(--stone)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:120 }}>{o.custom_description?.slice(0,40)}...</span>
                         </div>
-                      ))}
+                      ) : (
+                        (o.order_items||[]).map(i => `${i.product_name} ×${i.qty}`).join(', ')
+                      )}
                     </td>
-                    <td style={{ padding: '14px 20px', fontSize: '0.82rem', color: 'var(--stone)', whiteSpace: 'nowrap' }}>
-                      {new Date(o.created_at).toLocaleDateString('en-EG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    <td style={{ padding:'14px 20px', fontSize:'0.78rem', color:'var(--stone)', whiteSpace:'nowrap' }}>
+                      {new Date(o.created_at).toLocaleDateString('en-EG', { day:'numeric', month:'short', year:'numeric' })}
                     </td>
-                    <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bronze)', whiteSpace: 'nowrap' }}>
-                      EGP {o.total.toLocaleString()}
+                    <td style={{ padding:'14px 20px', fontSize:'0.88rem', fontWeight:500, color: o.order_type === 'custom' ? 'var(--stone)' : 'var(--bronze)', whiteSpace:'nowrap' }}>
+                      {o.order_type === 'custom' ? 'TBD' : `EGP ${o.total?.toLocaleString()}`}
                     </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      <StatusBadge status={o.status} />
+                    <td style={{ padding:'14px 20px' }}>
+                      <span style={{ display:'inline-block', padding:'3px 10px', borderRadius:100, fontSize:'0.65rem', fontWeight:500, background:`${STATUS_COLORS[o.status]}18`, color:STATUS_COLORS[o.status], whiteSpace:'nowrap', textTransform:'capitalize' }}>
+                        {o.status?.replace(/_/g,' ')}
+                      </span>
                     </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--bronze)', borderBottom: '1px solid var(--bronze)', paddingBottom: 1 }}>View →</span>
-                    </td>
+                    <td style={{ padding:'14px 20px', fontSize:'0.78rem', color:'var(--bronze)' }}>View →</td>
                   </tr>
                 ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={7} style={{ padding:'48px', textAlign:'center', color:'var(--stone)' }}>No orders found.</td></tr>
+                )}
               </tbody>
             </table>
-          )}
-        </div>
-
-        <p style={{ marginTop: 16, fontSize: '0.72rem', color: 'var(--stone)' }}>
-          The Export to Excel button downloads a .csv file that opens directly in Excel with all order details, addresses, and items.
-        </p>
+          </div>
+        )}
       </div>
     </div>
   )

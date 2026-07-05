@@ -1,177 +1,194 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { ORDER_STATUS } from '@/lib/constants'
-import AdminNav from '@/components/AdminNav'
 import { useAdmin } from '@/context/AdminContext'
 import { logAction } from '@/lib/audit'
-import { StatusBadge } from './Dashboard'
+import AdminNav from '@/components/AdminNav'
 
-export default function AdminOrderDetail() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { user } = useAdmin()
-  const [order, setOrder] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [bosta, setBosta] = useState({ loading:false, done:false, error:null })
-
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase.from('orders').select('*, order_items(*)').eq('id', id).single()
-      setOrder(data)
-      setLoading(false)
-    }
-    load()
-  }, [id])
-
-  async function updateStatus(newStatus) {
-    setSaving(true)
-    const { data } = await supabase.from('orders').update({ status: newStatus }).eq('id', id).select('*, order_items(*)').single()
-    if (data) {
-      setOrder(data)
-      await logAction({ userEmail: user?.email, action: `Changed order status to "${newStatus}"`, targetType:'order', targetId: id, targetName: order?.guest_name, details: { from: order?.status, to: newStatus } })
-    }
-    setSaving(false)
-  }
-
-  async function deleteOrder() {
-    if (!confirm('Permanently delete this order? This cannot be undone.')) return
-    if (!confirm('Are you sure? All order items will also be deleted.')) return
-    const { error } = await supabase.from('orders').delete().eq('id', id)
-    if (error) { alert('Failed to delete: ' + error.message); return }
-    await logAction({ userEmail: user?.email, action: 'Deleted order', targetType:'order', targetId: id, targetName: order?.guest_name, details: { total: order?.total, status: order?.status } })
-    navigate('/admin/orders')
-  }
-
-  async function createBostaShipment() {
-    setBosta({ loading:true, done:false, error:null })
-    try {
-      const { data, error } = await supabase.functions.invoke('create-bosta-shipment', { body: { order_id: id } })
-      if (error) throw new Error(error.message)
-      setBosta({ loading:false, done:true, error:null })
-      const { data: refreshed } = await supabase.from('orders').select('*, order_items(*)').eq('id', id).single()
-      if (refreshed) setOrder(refreshed)
-    } catch (err) {
-      setBosta({ loading:false, done:false, error:err.message })
-    }
-  }
-
-  if (loading) return <div style={{ minHeight:'100vh', background:'#F8F6F0' }}><AdminNav /><p style={{ padding:40, color:'var(--stone)' }}>Loading...</p></div>
-  if (!order)  return <div style={{ minHeight:'100vh', background:'#F8F6F0' }}><AdminNav /><p style={{ padding:40, color:'var(--stone)' }}>Order not found.</p></div>
-
-  const addr = order.shipping_address || {}
-  const items = order.order_items || []
-
-  return (
-    <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
-      <AdminNav />
-      <div className="admin-page-content" style={{ maxWidth:1000, margin:'0 auto', padding:'40px 32px' }}>
-        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:32 }}>
-          <div>
-            <button onClick={() => navigate('/admin/orders')} style={{ fontSize:'0.72rem', color:'var(--stone)', background:'none', border:'none', cursor:'pointer', marginBottom:12 }}>← Back to orders</button>
-            <h1 style={{ fontFamily:'var(--font-display)', fontSize:'1.8rem', fontWeight:300 }}>Order #{order.id.split('-')[0].toUpperCase()}</h1>
-            <p style={{ color:'var(--stone)', fontSize:'0.82rem', marginTop:4 }}>{new Date(order.created_at).toLocaleString('en-EG')}</p>
-          </div>
-          <StatusBadge status={order.status} />
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:24 }}>
-          <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-            <Section title="Items">
-              {items.map(item => (
-                <div key={item.id} style={{ display:'flex', justifyContent:'space-between', padding:'12px 0', borderBottom:'1px solid rgba(45,43,52,0.07)' }}>
-                  <div>
-                    <div style={{ fontSize:'0.9rem' }}>{item.product_name}</div>
-                    {item.variant_name && <div style={{ fontSize:'0.75rem', color:'var(--stone)', marginTop:2 }}>{item.variant_name}</div>}
-                    {item.personalisation_note && <div style={{ fontSize:'0.75rem', color:'var(--bronze)', marginTop:4, fontStyle:'italic' }}>Note: "{item.personalisation_note}"</div>}
-                    <div style={{ fontSize:'0.75rem', color:'var(--stone)', marginTop:2 }}>Qty: {item.qty}</div>
-                  </div>
-                  <div style={{ fontSize:'0.9rem', fontWeight:500, color:'var(--bronze)', marginLeft:16 }}>EGP {(item.unit_price*item.qty).toLocaleString()}</div>
-                </div>
-              ))}
-              <div style={{ paddingTop:14 }}>
-                {[['Subtotal',`EGP ${order.subtotal?.toLocaleString()}`],['Shipping',order.shipping===0?'Free':`EGP ${order.shipping}`]].map(([l,v]) => (
-                  <div key={l} style={{ display:'flex', justifyContent:'space-between', fontSize:'0.82rem', color:'var(--stone)', padding:'4px 0' }}><span>{l}</span><span>{v}</span></div>
-                ))}
-                <div style={{ display:'flex', justifyContent:'space-between', fontWeight:500, paddingTop:8, borderTop:'1px solid rgba(45,43,52,0.08)', marginTop:4 }}>
-                  <span>Total</span><span style={{ color:'var(--bronze)' }}>EGP {order.total?.toLocaleString()}</span>
-                </div>
-              </div>
-            </Section>
-            <Section title="Customer">
-              <Row label="Name"  value={order.guest_name} />
-              <Row label="Email" value={<a href={`mailto:${order.guest_email}`} style={{ color:'var(--bronze)' }}>{order.guest_email}</a>} />
-              <Row label="Phone" value={<a href={`tel:${order.guest_phone}`}    style={{ color:'var(--bronze)' }}>{order.guest_phone}</a>} />
-              {order.payment_method && <Row label="Payment" value={order.payment_method} />}
-              {order.paymob_txn_id  && <Row label="Paymob TXN" value={order.paymob_txn_id} mono />}
-            </Section>
-            <Section title="Delivery address">
-              <Row label="Name"    value={addr.name} />
-              <Row label="Address" value={`${addr.line1}${addr.line2?', '+addr.line2:''}`} />
-              <Row label="City"    value={`${addr.city}, ${addr.governorate}`} />
-              {addr.phone && <Row label="Phone" value={addr.phone} />}
-            </Section>
-            {order.bosta_tracking_no ? (
-              <Section title="Shipping">
-                <Row label="Bosta tracking" value={order.bosta_tracking_no} mono />
-                {order.bosta_shipment_id && <Row label="Shipment ID" value={order.bosta_shipment_id} mono />}
-              </Section>
-            ) : order.status === 'ready_to_ship' && (
-              <Section title="Shipping">
-                {bosta.error && <p style={{ fontSize:'0.82rem', color:'#EF4444', marginBottom:12 }}>{bosta.error}</p>}
-                {bosta.done ? <p style={{ fontSize:'0.85rem', color:'#16A34A' }}>Shipment created successfully.</p> : (
-                  <button className="btn btn-bronze" style={{ width:'100%' }} onClick={createBostaShipment} disabled={bosta.loading}>
-                    {bosta.loading ? 'Creating shipment...' : 'Create Bosta shipment →'}
-                  </button>
-                )}
-              </Section>
-            )}
-            {order.notes && <Section title="Order notes"><p style={{ fontSize:'0.88rem', lineHeight:1.7 }}>{order.notes}</p></Section>}
-          </div>
-          <div>
-            <Section title="Update status">
-              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                {Object.entries(ORDER_STATUS).map(([key, val]) => (
-                  <button key={key} onClick={() => updateStatus(key)} disabled={saving || order.status===key}
-                    style={{ padding:'10px 16px', borderRadius:'var(--r)', fontSize:'0.78rem', cursor:order.status===key?'default':'pointer', border:'1px solid', fontFamily:'var(--font-body)', textAlign:'left', transition:'all .2s', borderColor:order.status===key?val.color:'rgba(45,43,52,0.15)', background:order.status===key?`${val.color}15`:'#fff', color:order.status===key?val.color:'var(--charcoal)', opacity:saving?0.5:1 }}>
-                    {order.status===key?'✓ ':''}{val.label}
-                  </button>
-                ))}
-              </div>
-            </Section>
-            <div style={{ marginTop:16, padding:16, background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)' }}>
-              <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)', marginBottom:12 }}>Quick contact</p>
-              <a href={`mailto:${order.guest_email}`} className="btn btn-outline btn-sm btn-full" style={{ marginBottom:8, display:'block', textAlign:'center' }}>Email customer</a>
-              <a href={`https://wa.me/${order.guest_phone?.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="btn btn-bronze btn-sm btn-full" style={{ display:'block', textAlign:'center' }}>WhatsApp</a>
-            </div>
-            <div style={{ marginTop:16, padding:16, background:'#FEF2F2', borderRadius:'var(--r)', border:'1px solid #FECACA' }}>
-              <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'#991B1B', marginBottom:12 }}>Danger zone</p>
-              <button onClick={deleteOrder} style={{ width:'100%', padding:'10px', background:'#8B1A1A', color:'#fff', border:'none', borderRadius:'var(--r)', fontSize:'0.72rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', fontFamily:'var(--font-body)' }}>
-                Delete order
-              </button>
-              <p style={{ fontSize:'0.7rem', color:'#991B1B', marginTop:8, lineHeight:1.5 }}>Permanently removes this order and all its items.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+const STATUSES = ['pending_payment','in_production','ready_to_ship','shipped','completed','cancelled']
+const STATUS_LABELS = { pending_payment:'Order Placed', in_production:'In Production', ready_to_ship:'Ready to Ship', shipped:'Shipped', completed:'Completed', cancelled:'Cancelled' }
+const STATUS_COLORS = { pending_payment:'#A8956F', in_production:'#C4873A', ready_to_ship:'#2D2B34', shipped:'#2D2B34', completed:'#6B8F5E', cancelled:'#8B1A1A' }
 
 function Section({ title, children }) {
   return (
-    <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:'20px 24px' }}>
-      <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--stone)', marginBottom:16 }}>{title}</p>
+    <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:24, marginBottom:16 }}>
+      <p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)', marginBottom:16 }}>{title}</p>
       {children}
     </div>
   )
 }
 
-function Row({ label, value, mono=false }) {
+export default function AdminOrderDetail() {
+  const { id }       = useParams()
+  const navigate     = useNavigate()
+  const { user }     = useAdmin()
+  const [order,  setOrder]  = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [loading,setLoading]= useState(true)
+
+  useEffect(() => { load() }, [id])
+
+  async function load() {
+    const { data } = await supabase.from('orders').select('*, order_items(*)').eq('id', id).single()
+    setOrder(data)
+    setLoading(false)
+  }
+
+  async function updateStatus(newStatus) {
+    setSaving(true)
+    const { data } = await supabase.from('orders').update({ status: newStatus }).eq('id', id).select('*, order_items(*)').single()
+    if (data) {
+      await logAction({ userEmail: user?.email, action: `Changed order status to "${newStatus}"`, targetType:'order', targetId: id, targetName: order?.guest_name, details: { from: order?.status, to: newStatus } })
+      setOrder(data)
+    }
+    setSaving(false)
+  }
+
+  async function deleteOrder() {
+    if (!confirm('Permanently delete this order?')) return
+    if (!confirm('Are you sure? This cannot be undone.')) return
+    await logAction({ userEmail: user?.email, action: 'Deleted order', targetType:'order', targetId: id, targetName: order?.guest_name, details: { total: order?.total, status: order?.status } })
+    await supabase.from('orders').delete().eq('id', id)
+    navigate('/admin/orders')
+  }
+
+  if (loading) return <div style={{ minHeight:'100vh', background:'#F8F6F0' }}><AdminNav /><p style={{ padding:40, color:'var(--stone)' }}>Loading...</p></div>
+  if (!order)  return <div style={{ minHeight:'100vh', background:'#F8F6F0' }}><AdminNav /><p style={{ padding:40, color:'var(--stone)' }}>Order not found.</p></div>
+
+  const isCustom = order.order_type === 'custom'
+
   return (
-    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', padding:'7px 0', borderBottom:'1px solid rgba(45,43,52,0.05)' }}>
-      <span style={{ fontSize:'0.78rem', color:'var(--stone)', flexShrink:0, marginRight:16 }}>{label}</span>
-      <span style={{ fontSize:mono?'0.72rem':'0.85rem', fontFamily:mono?'monospace':'inherit', textAlign:'right', wordBreak:'break-all' }}>{value}</span>
+    <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
+      <AdminNav />
+      <div className="admin-page-content" style={{ maxWidth:1100, margin:'0 auto', padding:'40px 32px' }}>
+
+        <div style={{ marginBottom:32 }}>
+          <button onClick={() => navigate('/admin/orders')} style={{ fontSize:'0.72rem', color:'var(--stone)', background:'none', border:'none', cursor:'pointer', marginBottom:12 }}>← Back to orders</button>
+          <div style={{ display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
+            <h1 style={{ fontFamily:'var(--font-display)', fontSize:'1.8rem', fontWeight:300 }}>
+              #{id.slice(0,8).toUpperCase()}
+            </h1>
+            {isCustom && (
+              <span style={{ background:'rgba(168,149,111,0.15)', color:'var(--bronze)', fontSize:'0.7rem', fontWeight:500, padding:'4px 12px', borderRadius:100 }}>✦ Custom Order</span>
+            )}
+            <span style={{ display:'inline-block', padding:'4px 12px', borderRadius:100, fontSize:'0.7rem', fontWeight:500, background:`${STATUS_COLORS[order.status]}18`, color:STATUS_COLORS[order.status], textTransform:'capitalize' }}>
+              {order.status?.replace(/_/g,' ')}
+            </span>
+          </div>
+          <p style={{ color:'var(--stone)', fontSize:'0.82rem', marginTop:6 }}>
+            {new Date(order.created_at).toLocaleDateString('en-EG', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+          </p>
+        </div>
+
+        <div className="admin-order-grid" style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:24 }}>
+
+          {/* Left */}
+          <div>
+            {/* Custom order details */}
+            {isCustom && (
+              <Section title="Custom order details">
+                <p style={{ fontSize:'0.9rem', lineHeight:1.8, color:'var(--charcoal)', whiteSpace:'pre-wrap', marginBottom: order.stl_file_url ? 16 : 0 }}>
+                  {order.custom_description || 'No description provided.'}
+                </p>
+                {order.stl_file_url && (
+                  <a href={order.stl_file_url} target="_blank" rel="noreferrer"
+                    style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'10px 18px', background:'var(--charcoal)', color:'var(--cream)', borderRadius:'var(--r)', fontSize:'0.75rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', textDecoration:'none' }}>
+                    ↓ Download STL / 3D File
+                  </a>
+                )}
+              </Section>
+            )}
+
+            {/* Order items — for standard orders */}
+            {!isCustom && (
+              <Section title="Order items">
+                {(order.order_items||[]).map(item => (
+                  <div key={item.id} style={{ display:'flex', justifyContent:'space-between', padding:'12px 0', borderBottom:'1px solid rgba(45,43,52,0.06)' }}>
+                    <div>
+                      <div style={{ fontSize:'0.9rem' }}>{item.product_name}</div>
+                      {item.variant_name && <div style={{ fontSize:'0.75rem', color:'var(--stone)', marginTop:2 }}>{item.variant_name}</div>}
+                      {item.personalisation_note && <div style={{ fontSize:'0.75rem', color:'var(--bronze)', marginTop:2 }}>Note: {item.personalisation_note}</div>}
+                      <div style={{ fontSize:'0.75rem', color:'var(--stone)', marginTop:2 }}>Qty: {item.qty}</div>
+                    </div>
+                    <div style={{ fontSize:'0.9rem', fontWeight:500, color:'var(--bronze)' }}>EGP {(item.unit_price*item.qty).toLocaleString()}</div>
+                  </div>
+                ))}
+                <div style={{ paddingTop:12, display:'flex', flexDirection:'column', gap:6 }}>
+                  {[['Subtotal', `EGP ${order.subtotal?.toLocaleString()}`], ['Shipping', order.shipping===0?'Free':`EGP ${order.shipping}`]].map(([l,v]) => (
+                    <div key={l} style={{ display:'flex', justifyContent:'space-between', fontSize:'0.85rem', color:'var(--stone)' }}><span>{l}</span><span>{v}</span></div>
+                  ))}
+                  {order.discount_amount > 0 && (
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.85rem', color:'#16A34A' }}><span>Discount ({order.discount_code})</span><span>− EGP {order.discount_amount}</span></div>
+                  )}
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:'1rem', fontWeight:600, paddingTop:8, borderTop:'1px solid rgba(45,43,52,0.1)', marginTop:4 }}><span>Total</span><span>EGP {order.total?.toLocaleString()}</span></div>
+                </div>
+              </Section>
+            )}
+
+            {/* Customer */}
+            <Section title="Customer">
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+                {[['Name', order.guest_name], ['Email', order.guest_email], ['Phone', order.guest_phone], ['Payment', 'Cash on delivery']].map(([l,v]) => v ? (
+                  <div key={l}><p style={{ fontSize:'0.65rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--stone)', marginBottom:4 }}>{l}</p><p style={{ fontSize:'0.88rem' }}>{v}</p></div>
+                ) : null)}
+              </div>
+            </Section>
+
+            {/* Shipping address */}
+            {order.shipping_address && (
+              <Section title="Shipping address">
+                <p style={{ fontSize:'0.9rem', lineHeight:1.8 }}>
+                  {order.shipping_address.name}<br/>
+                  {order.shipping_address.line1}{order.shipping_address.line2 ? `, ${order.shipping_address.line2}` : ''}<br/>
+                  {order.shipping_address.city}, {order.shipping_address.governorate}
+                  {order.shipping_address.postal_code && <>, {order.shipping_address.postal_code}</>}
+                </p>
+              </Section>
+            )}
+
+            {order.notes && (
+              <Section title="Order notes">
+                <p style={{ fontSize:'0.9rem', lineHeight:1.7, color:'var(--stone)' }}>{order.notes}</p>
+              </Section>
+            )}
+          </div>
+
+          {/* Right sidebar */}
+          <div className="admin-order-sidebar">
+            <Section title="Update status">
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {STATUSES.map(s => (
+                  <button key={s} onClick={() => updateStatus(s)} disabled={saving || order.status===s}
+                    style={{ padding:'10px 14px', borderRadius:'var(--r)', border:'1px solid', fontSize:'0.78rem', cursor:order.status===s?'default':'pointer', fontFamily:'var(--font-body)', textAlign:'left', fontWeight: order.status===s?600:400, background:order.status===s?`${STATUS_COLORS[s]}12`:'transparent', color:order.status===s?STATUS_COLORS[s]:'var(--charcoal)', borderColor:order.status===s?STATUS_COLORS[s]:'rgba(45,43,52,0.15)', textTransform:'capitalize' }}>
+                    {order.status===s && '● '}{STATUS_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            </Section>
+
+            {isCustom && (
+              <Section title="Custom order price">
+                <p style={{ fontSize:'0.78rem', color:'var(--stone)', lineHeight:1.6, marginBottom:12 }}>
+                  Once you've reviewed the request, update the order total directly in Supabase and notify the customer via WhatsApp.
+                </p>
+                {order.guest_phone && (
+                  <a href={`https://wa.me/${order.guest_phone.replace(/[^0-9]/g,'')}?text=Hi%20${encodeURIComponent(order.guest_name)}%2C%20your%20custom%20order%20quote%20is%20ready!%20`}
+                    target="_blank" rel="noreferrer"
+                    style={{ display:'block', textAlign:'center', padding:'10px', background:'#25D366', color:'#fff', borderRadius:'var(--r)', fontSize:'0.75rem', fontWeight:500, letterSpacing:'0.06em', textTransform:'uppercase', textDecoration:'none' }}>
+                    💬 WhatsApp customer
+                  </a>
+                )}
+              </Section>
+            )}
+
+            <Section title="Actions">
+              <button onClick={deleteOrder} style={{ width:'100%', padding:'10px', background:'transparent', border:'1px solid #FECACA', borderRadius:'var(--r)', fontSize:'0.72rem', cursor:'pointer', color:'#991B1B', fontFamily:'var(--font-body)' }}>
+                Delete order
+              </button>
+            </Section>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
