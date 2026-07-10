@@ -1,10 +1,11 @@
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CartProvider } from '@/context/CartContext'
 import { AdminProvider } from '@/context/AdminContext'
 import AdminGuard from '@/components/AdminGuard'
 import Nav from '@/components/Nav'
+import { pixelPageView } from '@/lib/pixel'
 
 // Store pages
 import Home              from '@/pages/Home'
@@ -19,55 +20,46 @@ import OrderConfirmation from '@/pages/OrderConfirmation'
 
 // Admin pages
 import AdminLogin        from '@/pages/admin/Login'
+import AdminSetPassword  from '@/pages/admin/SetPassword'
 import AdminDashboard    from '@/pages/admin/Dashboard'
 import AdminOrders       from '@/pages/admin/Orders'
 import AdminOrderDetail  from '@/pages/admin/OrderDetail'
 import AdminProducts     from '@/pages/admin/Products'
-import AdminProductForm    from '@/pages/admin/ProductForm'
-import AdminSetPassword    from '@/pages/admin/SetPassword'
-import AdminDiscountCodes  from '@/pages/admin/DiscountCodes'
-import AdminFinance         from '@/pages/admin/Finance'
-import AdminContacts        from '@/pages/admin/Contacts'
-import AdminBlockList       from '@/pages/admin/BlockList'
-import AdminCategories      from '@/pages/admin/Categories'
-import AdminChangelog       from '@/pages/admin/Changelog'
-import AdminReviews         from '@/pages/admin/Reviews'
+import AdminProductForm  from '@/pages/admin/ProductForm'
+import AdminDiscountCodes from '@/pages/admin/DiscountCodes'
+import AdminFinance      from '@/pages/admin/Finance'
+import AdminContacts     from '@/pages/admin/Contacts'
+import AdminBlockList    from '@/pages/admin/BlockList'
+import AdminCategories   from '@/pages/admin/Categories'
+import AdminChangelog    from '@/pages/admin/Changelog'
+import AdminReviews      from '@/pages/admin/Reviews'
 
-/**
- * Catches Supabase auth tokens in the URL hash.
- * Invite links land here: /#access_token=xxx&type=invite
- * We let Supabase process the token, then redirect to set-password page.
- */
 function AuthCallbackHandler() {
-  const navigate = useNavigate()
-
+  const navigate = useLocation()
   useEffect(() => {
     const hash = window.location.hash
     if (!hash || !hash.includes('access_token')) return
-
-    // Parse the hash fragment
     const params = new URLSearchParams(hash.replace('#', ''))
     const type   = params.get('type')
-
-    // Let Supabase pick up the session from the URL
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         if (type === 'invite' || type === 'recovery') {
-          // Send to password setup page
-          navigate('/admin/set-password', { replace: true })
+          window.location.href = '/admin/set-password'
         } else {
-          navigate('/admin', { replace: true })
+          window.location.href = '/admin'
         }
       }
     })
-  }, [navigate])
-
+  }, [])
   return null
 }
 
 function ScrollToTop() {
   const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }, [pathname])
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    pixelPageView()
+  }, [pathname])
   return null
 }
 
@@ -95,20 +87,20 @@ function AdminLayout() {
   return (
     <AdminProvider>
       <Routes>
-        <Route path="/admin/login"        element={<AdminLogin />} />
-        <Route path="/admin/set-password" element={<AdminSetPassword />} />
-        <Route path="/admin"              element={<AdminGuard><AdminDashboard /></AdminGuard>} />
-        <Route path="/admin/orders"       element={<AdminGuard><AdminOrders /></AdminGuard>} />
-        <Route path="/admin/orders/:id"   element={<AdminGuard><AdminOrderDetail /></AdminGuard>} />
-        <Route path="/admin/products"     element={<AdminGuard><AdminProducts /></AdminGuard>} />
-        <Route path="/admin/products/:id"      element={<AdminGuard><AdminProductForm /></AdminGuard>} />
-        <Route path="/admin/discount-codes"    element={<AdminGuard><AdminDiscountCodes /></AdminGuard>} />
-        <Route path="/admin/finance"            element={<AdminGuard><AdminFinance /></AdminGuard>} />
-        <Route path="/admin/contacts"           element={<AdminGuard><AdminContacts /></AdminGuard>} />
-        <Route path="/admin/blocklist"          element={<AdminGuard><AdminBlockList /></AdminGuard>} />
-        <Route path="/admin/categories"         element={<AdminGuard><AdminCategories /></AdminGuard>} />
-        <Route path="/admin/changelog"          element={<AdminGuard><AdminChangelog /></AdminGuard>} />
-        <Route path="/admin/reviews"            element={<AdminGuard><AdminReviews /></AdminGuard>} />
+        <Route path="/admin/login"          element={<AdminLogin />} />
+        <Route path="/admin/set-password"   element={<AdminSetPassword />} />
+        <Route path="/admin"                element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+        <Route path="/admin/orders"         element={<AdminGuard><AdminOrders /></AdminGuard>} />
+        <Route path="/admin/orders/:id"     element={<AdminGuard><AdminOrderDetail /></AdminGuard>} />
+        <Route path="/admin/products"       element={<AdminGuard><AdminProducts /></AdminGuard>} />
+        <Route path="/admin/products/:id"   element={<AdminGuard><AdminProductForm /></AdminGuard>} />
+        <Route path="/admin/discount-codes" element={<AdminGuard><AdminDiscountCodes /></AdminGuard>} />
+        <Route path="/admin/finance"        element={<AdminGuard><AdminFinance /></AdminGuard>} />
+        <Route path="/admin/contacts"       element={<AdminGuard><AdminContacts /></AdminGuard>} />
+        <Route path="/admin/blocklist"      element={<AdminGuard><AdminBlockList /></AdminGuard>} />
+        <Route path="/admin/categories"     element={<AdminGuard><AdminCategories /></AdminGuard>} />
+        <Route path="/admin/changelog"      element={<AdminGuard><AdminChangelog /></AdminGuard>} />
+        <Route path="/admin/reviews"        element={<AdminGuard><AdminReviews /></AdminGuard>} />
       </Routes>
     </AdminProvider>
   )
@@ -117,7 +109,6 @@ function AdminLayout() {
 export default function App() {
   const { pathname } = useLocation()
   const isAdmin = pathname.startsWith('/admin')
-
   return (
     <CartProvider>
       <AuthCallbackHandler />

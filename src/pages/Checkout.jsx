@@ -9,6 +9,8 @@ import { sendOrderConfirmationEmail } from '@/lib/email'
 import ProductIllustration from '@/components/illustrations/ProductIllustration'
 import Footer from '@/components/Footer'
 import Toast from '@/components/Toast'
+import { pixelInitiateCheckout, pixelPurchase } from '@/lib/pixel'
+
 
 const EMPTY = { fullName:'', email:'', phone:'', line1:'', line2:'', city:'', governorate:'Cairo', postalCode:'', orderNotes:'' }
 
@@ -71,6 +73,8 @@ export default function Checkout() {
       return
     }
     setLoading(true)
+    pixelInitiateCheckout({ cart, total })
+
     setServerError(null)
 
     // Check blocklist
@@ -90,6 +94,7 @@ export default function Checkout() {
 
     setLoading(false)
     clearCart()
+    pixelPurchase({ orderId, total, cart })
     navigate(`/order-confirmation?id=${orderId}`)
   }
 

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { PRODUCTS } from '@/lib/products'
+import { pixelAddToCart } from '@/lib/pixel'
 
 const CartContext = createContext(null)
 
@@ -59,6 +60,7 @@ export function CartProvider({ children }) {
     })
 
     showToast('Added to cart ✦')
+    if (product) pixelAddToCart({ name: product.name, slug: product.slug, price: product.price, qty })
   }, [showToast])
 
   const removeFromCart = useCallback((key) => setCart(prev => prev.filter(i => i.key !== key)), [])
