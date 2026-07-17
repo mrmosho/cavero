@@ -8,6 +8,8 @@ import ProductIllustration from '@/components/illustrations/ProductIllustration'
 import ProductCard from '@/components/ProductCard'
 import Footer from '@/components/Footer'
 import Toast from '@/components/Toast'
+import { pixelViewContent } from '@/lib/pixel'
+import { tiktokViewContent } from '@/lib/tiktok'
 
 export default function Product() {
   const { slug }     = useParams()
@@ -28,6 +30,8 @@ export default function Product() {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [reviewForm,     setReviewForm]     = useState({ name:'', rating:5, body:'' })
   const [reviewLoading,  setReviewLoading]  = useState(false)
+  if (product) pixelViewContent({ name: product.name, slug, price: product.price, category: product.category })
+    tiktokViewContent({ name: product.name, slug, price: product.price, category: product.category })
   const [reviewSent,     setReviewSent]     = useState(false)
   const [reviewError,    setReviewError]    = useState(null)
 

@@ -134,7 +134,7 @@ export default function AdminFinance() {
   return (
     <div style={{ minHeight:'100vh', background:'#F8F6F0' }}>
       <AdminNav />
-      <div style={{ maxWidth:1200, margin:'0 auto', padding:'40px 32px' }}>
+      <div className="admin-page-content" style={{ maxWidth:1200, margin:'0 auto', padding:'40px 32px' }}>
 
         <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:32 }}>
           <div>
@@ -172,7 +172,7 @@ export default function AdminFinance() {
               {statCard('Shipping Collected', `EGP ${totalShip.toLocaleString()}`, 'From confirmed orders')}
             </div>
 
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24, marginBottom:24 }}>
+            <div className="admin-finance-charts" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24, marginBottom:24 }}>
 
               {/* Monthly revenue */}
               <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:24 }}>
@@ -218,7 +218,7 @@ export default function AdminFinance() {
             {/* Order status breakdown */}
             <div style={{ background:'#fff', borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.08)', padding:24, marginBottom:24 }}>
               <h3 style={{ fontSize:'0.72rem', fontWeight:500, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--stone)', marginBottom:20 }}>Revenue by status</h3>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:16 }}>
+              <div className="admin-finance-status" style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:16 }}>
                 {['pending_payment','in_production','ready_to_ship','shipped','completed','cancelled'].map(s => {
                   const statusOrders = filtered.filter(o => o.status === s)
                   const rev = statusOrders.reduce((sum,o) => sum + (o.total||0), 0)

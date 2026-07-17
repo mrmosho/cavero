@@ -10,6 +10,7 @@ import ProductIllustration from '@/components/illustrations/ProductIllustration'
 import Footer from '@/components/Footer'
 import Toast from '@/components/Toast'
 import { pixelInitiateCheckout, pixelPurchase } from '@/lib/pixel'
+import { tiktokInitiateCheckout, tiktokPurchase } from '@/lib/tiktok'
 
 
 const EMPTY = { fullName:'', email:'', phone:'', line1:'', line2:'', city:'', governorate:'Cairo', postalCode:'', orderNotes:'' }
@@ -74,6 +75,7 @@ export default function Checkout() {
     }
     setLoading(true)
     pixelInitiateCheckout({ cart, total })
+    tiktokInitiateCheckout({ cart, total })
 
     setServerError(null)
 
@@ -95,6 +97,7 @@ export default function Checkout() {
     setLoading(false)
     clearCart()
     pixelPurchase({ orderId, total, cart })
+    tiktokPurchase({ orderId, total, cart })
     navigate(`/order-confirmation?id=${orderId}`)
   }
 

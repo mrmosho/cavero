@@ -6,6 +6,7 @@ import { AdminProvider } from '@/context/AdminContext'
 import AdminGuard from '@/components/AdminGuard'
 import Nav from '@/components/Nav'
 import { pixelPageView } from '@/lib/pixel'
+import { tiktokPageView } from '@/lib/tiktok'
 
 // Store pages
 import Home              from '@/pages/Home'
@@ -59,6 +60,7 @@ function ScrollToTop() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
     pixelPageView()
+    tiktokPageView()
   }, [pathname])
   return null
 }

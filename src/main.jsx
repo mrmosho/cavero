@@ -5,8 +5,10 @@ import App from './App'
 import './styles/cavero.css'
 import './styles/additions.css'
 import { initPixel } from './lib/pixel'
+import { initTikTok } from './lib/tiktok'
 
 initPixel()
+initTikTok()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

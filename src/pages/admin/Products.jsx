@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import AdminNav from '@/components/AdminNav'
 import { logAction } from '@/lib/audit'
 import { useAdmin } from '@/context/AdminContext'
-import { pixelViewContent } from '@/lib/pixel'
+
 
 export default function AdminProducts() {
   const [products,     setProducts]     = useState([])
