@@ -6,12 +6,11 @@ import { calculateShipping } from '@/lib/shipping'
 import { GOVERNORATES } from '@/lib/constants'
 import { supabase } from '@/lib/supabase'
 import { sendOrderConfirmationEmail } from '@/lib/email'
+import { pixelInitiateCheckout, pixelPurchase } from '@/lib/pixel'
+import { tiktokInitiateCheckout, tiktokPurchase } from '@/lib/tiktok'
 import ProductIllustration from '@/components/illustrations/ProductIllustration'
 import Footer from '@/components/Footer'
 import Toast from '@/components/Toast'
-import { pixelInitiateCheckout, pixelPurchase } from '@/lib/pixel'
-import { tiktokInitiateCheckout, tiktokPurchase } from '@/lib/tiktok'
-
 
 const EMPTY = { fullName:'', email:'', phone:'', line1:'', line2:'', city:'', governorate:'Cairo', postalCode:'', orderNotes:'' }
 
@@ -24,12 +23,11 @@ export default function Checkout() {
   const [loading,     setLoading]     = useState(false)
   const [serverError, setServerError] = useState(null)
 
-  // Discount
-  const [discountInput,   setDiscountInput]  = useState('')
-  const [discountOpen,    setDiscountOpen]   = useState(false)
-  const [discountLoading, setDiscountLoading]= useState(false)
-  const [discountError,   setDiscountError]  = useState(null)
-  const [appliedDiscount, setAppliedDiscount]= useState(null)
+  const [discountInput,   setDiscountInput]   = useState('')
+  const [discountOpen,    setDiscountOpen]    = useState(false)
+  const [discountLoading, setDiscountLoading] = useState(false)
+  const [discountError,   setDiscountError]   = useState(null)
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
 
   const shipping       = calculateShipping(cartTotal)
   const discountAmount = appliedDiscount ? Math.round(cartTotal * appliedDiscount.percent_off / 100) : 0
@@ -54,12 +52,11 @@ export default function Checkout() {
     setDiscountError(null)
     const { data, error } = await supabase.from('discount_codes').select('id,code,email,percent_off,expires_at,used').eq('code', code).single()
     setDiscountLoading(false)
-    if (error || !data)                                   { setDiscountError('Code not found.'); return }
-    if (data.used)                                        { setDiscountError('This code has already been used.'); return }
-    if (new Date(data.expires_at) < new Date())           { setDiscountError('This code has expired.'); return }
+    if (error || !data)                           { setDiscountError('Code not found.'); return }
+    if (data.used)                                { setDiscountError('This code has already been used.'); return }
+    if (new Date(data.expires_at) < new Date())   { setDiscountError('This code has expired.'); return }
     if (form.email && data.email !== form.email.toLowerCase().trim()) { setDiscountError('This code is not valid for this email address.'); return }
-    const amount = Math.round(cartTotal * data.percent_off / 100)
-    setAppliedDiscount({ id:data.id, code:data.code, email:data.email, percent_off:data.percent_off, amount })
+    setAppliedDiscount({ id:data.id, code:data.code, email:data.email, percent_off:data.percent_off, amount: Math.round(cartTotal * data.percent_off / 100) })
     setDiscountInput('')
   }
 
@@ -69,35 +66,48 @@ export default function Checkout() {
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); window.scrollTo({ top:0, behavior:'smooth' }); return }
     if (!cart.length) return
-    if (appliedDiscount && appliedDiscount.email !== form.email.toLowerCase().trim()) {
-      setServerError('The discount code email does not match your order email.')
-      return
-    }
+
     setLoading(true)
+    setServerError(null)
+
+    // Fire checkout pixels
     pixelInitiateCheckout({ cart, total })
     tiktokInitiateCheckout({ cart, total })
-
-    setServerError(null)
 
     // Check blocklist
     const { data: blocked } = await supabase.from('blocked_emails').select('id').eq('email', form.email.toLowerCase().trim()).maybeSingle()
     if (blocked) { setLoading(false); setServerError('We are unable to process this order. Please contact us on WhatsApp.'); return }
 
-    const shippingAddress = { name:form.fullName, phone:form.phone, line1:form.line1, line2:form.line2||null, city:form.city, governorate:form.governorate, postal_code:form.postalCode||null }
-    const { orderId, error } = await createOrder({ cart, customer:{ name:form.fullName, email:form.email, phone:form.phone }, shippingAddress, shipping, total, paymentMethod:'cod', notes:form.orderNotes||null, discountCode:appliedDiscount?.code||null, discountAmount:appliedDiscount?.amount||0 })
+    const shippingAddress = {
+      name: form.fullName, phone: form.phone,
+      line1: form.line1, line2: form.line2||null,
+      city: form.city, governorate: form.governorate,
+      postal_code: form.postalCode||null,
+    }
+
+    const { orderId, error } = await createOrder({
+      cart, customer: { name:form.fullName, email:form.email, phone:form.phone },
+      shippingAddress, shipping, total, paymentMethod:'cod',
+      notes: form.orderNotes||null,
+      discountCode: appliedDiscount?.code||null,
+      discountAmount: appliedDiscount?.amount||0,
+    })
 
     if (error) { setLoading(false); setServerError('Something went wrong placing your order. Please try again.'); return }
 
     if (appliedDiscount) {
       await supabase.from('discount_codes').update({ used:true, used_at:new Date().toISOString(), order_id:orderId }).eq('id', appliedDiscount.id)
     }
+
     const { data: fullOrder } = await supabase.from('orders').select('*, order_items(*)').eq('id', orderId).single()
     if (fullOrder) await sendOrderConfirmationEmail({ order: fullOrder })
 
-    setLoading(false)
-    clearCart()
+    // Fire purchase pixels
     pixelPurchase({ orderId, total, cart })
     tiktokPurchase({ orderId, total, cart })
+
+    setLoading(false)
+    clearCart()
     navigate(`/order-confirmation?id=${orderId}`)
   }
 
@@ -117,13 +127,12 @@ export default function Checkout() {
 
           <div className="checkout-layout" style={{ display:'grid', gridTemplateColumns:'1fr 400px', gap:60, alignItems:'start' }}>
 
-            {/* ── LEFT — form ── */}
+            {/* LEFT */}
             <div>
               {serverError && (
                 <div style={{ background:'#FEF2F2', border:'1px solid #FECACA', borderRadius:'var(--r)', padding:'14px 18px', marginBottom:24, fontSize:'0.88rem', color:'#991B1B' }}>{serverError}</div>
               )}
 
-              {/* Contact */}
               <Section title="Contact">
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
                   <Field label="Full name" error={errors.fullName}><input className="form-input" type="text" value={form.fullName} onChange={set('fullName')} placeholder="Your Name" /></Field>
@@ -132,7 +141,6 @@ export default function Checkout() {
                 <Field label="Phone number" error={errors.phone}><input className="form-input" type="tel" value={form.phone} onChange={set('phone')} placeholder="+20 1XX XXX XXXX" /></Field>
               </Section>
 
-              {/* Shipping */}
               <Section title="Shipping address">
                 <div style={{ display:'grid', gap:16 }}>
                   <Field label="Address line 1" error={errors.line1}><input className="form-input" type="text" value={form.line1} onChange={set('line1')} placeholder="Street, building, apartment" /></Field>
@@ -149,12 +157,10 @@ export default function Checkout() {
                 </div>
               </Section>
 
-              {/* Notes */}
               <Section title="Order notes (optional)">
                 <textarea className="form-textarea" placeholder="Any delivery instructions or additional notes..." value={form.orderNotes} onChange={set('orderNotes')} style={{ minHeight:80 }} />
               </Section>
 
-              {/* Payment */}
               <Section title="Payment">
                 <div style={{ display:'flex', gap:14, alignItems:'flex-start', padding:'18px 22px', background:'var(--light)', border:'1px solid rgba(45,43,52,0.08)', borderRadius:'var(--r)' }}>
                   <div style={{ fontSize:'1.2rem', marginTop:2 }}>💵</div>
@@ -165,7 +171,6 @@ export default function Checkout() {
                 </div>
               </Section>
 
-              {/* Discount code */}
               <div style={{ marginBottom:32 }}>
                 {!appliedDiscount ? (
                   <>
@@ -193,12 +198,11 @@ export default function Checkout() {
               </div>
             </div>
 
-            {/* ── RIGHT — order summary + place order ── */}
+            {/* RIGHT */}
             <div className="checkout-order-summary" style={{ position:'sticky', top:'calc(var(--nav-h) + 24px)' }}>
               <div style={{ background:'var(--charcoal)', color:'var(--cream)', padding:32, borderRadius:'var(--r)', marginBottom:16 }}>
                 <div style={{ fontFamily:'var(--font-display)', fontSize:'1.3rem', fontWeight:300, marginBottom:20 }}>Your order</div>
 
-                {/* Items */}
                 {cart.map(item => (
                   <div key={item.key} style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', paddingBottom:14, marginBottom:14, borderBottom:'1px solid rgba(232,228,216,0.1)' }}>
                     <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
@@ -211,11 +215,10 @@ export default function Checkout() {
                         <div style={{ fontSize:'0.7rem', color:'rgba(232,228,216,0.5)', marginTop:1 }}>Qty: {item.qty}</div>
                       </div>
                     </div>
-                    <div style={{ fontSize:'0.82rem', fontWeight:500, color:'var(--amber)', flexShrink:0, marginLeft:12 }}>EGP {(item.price*item.qty).toLocaleString()}</div>
+                    <div style={{ fontSize:'0.82rem', fontWeight:500, color:'var(--bronze)', flexShrink:0, marginLeft:12 }}>EGP {(item.price*item.qty).toLocaleString()}</div>
                   </div>
                 ))}
 
-                {/* Totals */}
                 {[
                   ['Subtotal', `EGP ${cartTotal.toLocaleString()}`],
                   ...(appliedDiscount ? [[`Discount (${appliedDiscount.percent_off}%)`, `− EGP ${discountAmount.toLocaleString()}`]] : []),
@@ -230,10 +233,7 @@ export default function Checkout() {
                 </div>
               </div>
 
-              {/* Place order button — dark charcoal */}
-              <button
-                onClick={handlePlaceOrder}
-                disabled={loading}
+              <button onClick={handlePlaceOrder} disabled={loading}
                 style={{ width:'100%', padding:'18px', background:'var(--charcoal)', color:'var(--cream)', border:'none', borderRadius:'var(--r)', fontSize:'0.78rem', fontWeight:500, letterSpacing:'0.12em', textTransform:'uppercase', cursor:loading?'default':'pointer', fontFamily:'var(--font-body)', opacity:loading?0.7:1, transition:'background .2s' }}
                 onMouseEnter={e => { if (!loading) e.target.style.background='#1a1820' }}
                 onMouseLeave={e => { e.target.style.background='var(--charcoal)' }}>

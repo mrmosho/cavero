@@ -4,12 +4,12 @@ import { useScrollReveal } from '@/hooks/useScrollReveal'
 import { useCart } from '@/context/CartContext'
 import { useProduct, useProducts } from '@/hooks/useProducts'
 import { supabase } from '@/lib/supabase'
+import { pixelViewContent } from '@/lib/pixel'
+import { tiktokViewContent } from '@/lib/tiktok'
 import ProductIllustration from '@/components/illustrations/ProductIllustration'
 import ProductCard from '@/components/ProductCard'
 import Footer from '@/components/Footer'
 import Toast from '@/components/Toast'
-import { pixelViewContent } from '@/lib/pixel'
-import { tiktokViewContent } from '@/lib/tiktok'
 
 export default function Product() {
   const { slug }     = useParams()
@@ -30,13 +30,12 @@ export default function Product() {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [reviewForm,     setReviewForm]     = useState({ name:'', rating:5, body:'' })
   const [reviewLoading,  setReviewLoading]  = useState(false)
-  if (product) pixelViewContent({ name: product.name, slug, price: product.price, category: product.category })
-    tiktokViewContent({ name: product.name, slug, price: product.price, category: product.category })
   const [reviewSent,     setReviewSent]     = useState(false)
   const [reviewError,    setReviewError]    = useState(null)
 
   useScrollReveal([loading])
 
+  // Fetch reviews
   useEffect(() => {
     if (!slug) return
     supabase
@@ -47,6 +46,13 @@ export default function Product() {
       .order('created_at', { ascending: false })
       .then(({ data }) => { setReviews(data || []); setReviewsLoading(false) })
   }, [slug])
+
+  // Fire pixel/tiktok once product is loaded
+  useEffect(() => {
+    if (!product) return
+    pixelViewContent({ name: product.name, slug, price: product.price, category: product.category })
+    tiktokViewContent({ name: product.name, slug, price: product.price, category: product.category })
+  }, [product?.slug])
 
   if (loading) return (
     <div style={{ paddingTop:'calc(var(--nav-h) + 80px)', textAlign:'center', padding:'160px 24px' }}>
@@ -94,7 +100,7 @@ export default function Product() {
     <>
       <Toast />
 
-      {/* ── Product detail ── */}
+      {/* Product detail */}
       <div style={{ paddingTop:'var(--nav-h)', background:'var(--cream)' }}>
         <div className="product-detail__inner">
 
@@ -132,7 +138,6 @@ export default function Product() {
 
             <h1 className="product-info__name">{product.name}</h1>
 
-            {/* Real rating */}
             {reviews.length > 0 && (
               <div className="product-info__rating" style={{ cursor:'pointer' }}
                 onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior:'smooth' })}>
@@ -214,7 +219,6 @@ export default function Product() {
 
             <p className="product-info__notice">✦ Made to order · Ships in 5-7 days · Free Cairo delivery</p>
 
-            {/* Accordion */}
             <div className="product-info__divider" />
             <div className="product-info__accordion">
               {accs.map(acc => (
@@ -228,7 +232,7 @@ export default function Product() {
             </div>
           </div>
 
-        </div>{/* ← closes product-detail__inner */}
+        </div>
 
         {/* Related */}
         {related.length > 0 && (
@@ -244,9 +248,9 @@ export default function Product() {
           </div>
         )}
 
-      </div>{/* ← closes outer paddingTop div */}
+      </div>
 
-      {/* ── Reviews section ── */}
+      {/* Reviews */}
       <div id="reviews-section" style={{ padding:'80px 0', background:'var(--cream)' }}>
         <div className="container">
           <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:40 }}>
@@ -261,7 +265,6 @@ export default function Product() {
             </button>
           </div>
 
-          {/* Review form */}
           {showReviewForm && (
             <div style={{ background:'var(--white)', padding:32, borderRadius:'var(--r)', border:'1px solid rgba(45,43,52,0.1)', marginBottom:40 }}>
               <h3 style={{ fontFamily:'var(--font-display)', fontSize:'1.3rem', fontWeight:300, marginBottom:24 }}>Your review</h3>
@@ -307,7 +310,6 @@ export default function Product() {
             </div>
           )}
 
-          {/* Review list */}
           {!reviewsLoading && (
             reviews.length === 0 ? (
               <div style={{ textAlign:'center', padding:'60px 24px', color:'var(--stone)' }}>
@@ -331,7 +333,6 @@ export default function Product() {
               </div>
             )
           )}
-
         </div>
       </div>
 
